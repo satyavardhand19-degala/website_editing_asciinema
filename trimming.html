@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Asciinema Editor - Anime Sky</title>
+  <link rel="stylesheet" href="https://unpkg.com/asciinema-player@3.7.1/dist/bundle/asciinema-player.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* --- ANIME SKY THEME --- */
+    body {
+      /* Anime Sky Gradient Background */
+      background: linear-gradient(180deg, #d4fcff 0%, #ffffff 100%);
+      background-attachment: fixed;
+      
+      color: #4a5568;
+      font-family: 'Nunito', 'Segoe UI', sans-serif; /* Softer, anime-like font */
+      padding: 20px;
+      max-width: 1000px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+
+    /* Optional: Add a subtle cloud texture using CSS radial gradients */
+    body::before {
+        content: "";
+        position: fixed;
+        top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.8) 10%, transparent 20%),
+                    radial-gradient(circle, rgba(255,255,255,0.8) 10%, transparent 20%);
+        background-position: 0 0, 100px 100px;
+        background-size: 200px 200px;
+        opacity: 0.3;
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    h2 { 
+        margin-top: 0; 
+        color: #3182ce; /* Anime Blue */
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .subtitle {
+      color: #718096; 
+      font-size: 0.95em; 
+      margin-top: -8px; 
+      margin-bottom: 25px;
+    }
+
+    .back-link {
+      color: #63b3ed;
+      text-decoration: none;
+      margin-bottom: 20px;
+      display: inline-block;
+      font-weight: 700;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: #3182ce; }
+
+    /* --- GLASSMORPHISM PANELS --- */
+    .loader-container {
+      display: flex; 
+      justify-content: space-between; 
+      align-items: flex-end;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      padding: 15px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
+    }
+
+    .control-group {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      padding: 20px;
+      border-radius: 12px;
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 10px 15px -3px rgba(164, 202, 254, 0.1);
+    }
+
+    .size-inputs {
+      display: flex; 
+      flex-direction: column; 
+      gap: 5px; 
+      margin-right: 15px;
+    }
+    .size-inputs label { font-size: 0.8em; font-weight: 700; color: #718096; }
+    .size-inputs input { width: 60px; }
+
+    .separator {
+      width: 1px; height: 35px; background: #cbd5e0; margin: 0 10px;
+    }
+
+    .spacer { flex-grow: 1; }
+
+    .status-bar {
+      color: #3182ce;
+      font-size: 0.9em;
+      min-height: 1.2em;
+      font-weight: 600;
+    }
+
+    /* --- INPUTS & BUTTONS --- */
+    input[type="number"], select, input[type="file"] {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      color: #4a5568;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus { border-color: #63b3ed; }
+
+    button {
+      padding: 8px 16px;
+      cursor: pointer;
+      background: #ffffff;
+      color: #4a5568;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      transition: all 0.2s;
+      font-weight: 700;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    button:hover:not(:disabled) { 
+        border-color: #bee3f8; 
+        background: #ebf8ff; 
+        transform: translateY(-1px);
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Primary Action Buttons */
+    button.primary { 
+        background: #3182ce; 
+        color: #fff; 
+        border: 2px solid #3182ce; 
+    }
+    button.primary:hover { 
+        background: #2b6cb0; 
+        border-color: #2b6cb0;
+        box-shadow: 0 4px 6px rgba(66, 153, 225, 0.3);
+    }
+
+    button.highlight-btn { 
+        background: #38b2ac; 
+        color: #fff; 
+        border: 2px solid #38b2ac; 
+    }
+    button.highlight-btn:hover { 
+        background: #319795; 
+        border-color: #319795;
+        box-shadow: 0 4px 6px rgba(56, 178, 172, 0.3);
+    }
+
+    /* --- PLAYER & TIMELINE --- */
+    #playerContainer {
+      position: relative;
+      margin-top: 20px;
+      border: none;
+      min-height: 200px;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1); /* Soft shadow */
+    }
+
+    #previewOverlay {
+      position: absolute;
+      top: 15px; right: 15px;
+      background: rgba(255, 255, 255, 0.95);
+      color: #3182ce;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 800;
+      pointer-events: none;
+      display: none;
+      z-index: 100;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .timeline-panel { margin-top: 30px; user-select: none; position: relative; }
+    .timeline-panel.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(0.5); }
+
+    .timeline-ruler {
+      position: relative; height: 20px; margin-bottom: 8px;
+      font-size: 11px; color: #718096; font-weight: 600;
+    }
+
+    .timeline-tick {
+      position: absolute; transform: translateX(-50%); bottom: 0;
+    }
+    .timeline-tick::after {
+      content: ''; position: absolute; left: 50%; bottom: -5px;
+      width: 2px; height: 6px; background: #cbd5e0; border-radius: 2px;
+    }
+
+    .timeline {
+      position: relative; height: 36px; 
+      background: #edf2f7; 
+      border-radius: 8px; 
+      border: 2px solid #e2e8f0;
+    }
+
+    /* Cute Handles */
+    .handle {
+      position: absolute; width: 14px; height: 100%;
+      background: #63b3ed; cursor: col-resize; z-index: 20; top: 0;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .handle:hover { background: #4299e1; transform: scale(1.1); transition: transform 0.1s; }
+    .handle.start { left: 0; }
+    .handle.end { right: 0; }
+
+    #playhead {
+      position: absolute; top: -6px; width: 3px; height: 48px;
+      background: #f687b3; /* Anime Pink */
+      z-index: 30; pointer-events: none; border-radius: 3px;
+      box-shadow: 0 2px 5px rgba(246, 135, 179, 0.5);
+    }
+
+    .keep-block {
+      position: absolute; height: 100%;
+      background: repeating-linear-gradient(
+        45deg,
+        rgba(104, 211, 145, 0.3),
+        rgba(104, 211, 145, 0.3) 10px,
+        rgba(104, 211, 145, 0.45) 10px,
+        rgba(104, 211, 145, 0.45) 20px
+      );
+      z-index: 10;
+      border-left: 2px solid #48bb78;
+      border-right: 2px solid #48bb78;
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>Asciinema Editor</h2>
+<p class="subtitle">
+  Simple video trimming. Drag handles &rarr; Click <b>"Mark to KEEP"</b>.
+</p>
+
+<a href="index.html" class="back-link">← Back to Home</a>
+
+<div class="loader-container">
+    <div>
+        <label style="display:block; font-size:0.75em; font-weight:700; color:#a0aec0; margin-bottom:4px;">UPLOAD FILE</label>
+        <input type="file" id="fileInput" accept=".cast">
+    </div>
+    <div id="statusMsg" class="status-bar">Waiting for file...</div>
+</div>
+
+<div id="playerContainer">
+    <div id="previewOverlay">PREVIEW MODE</div>
+    <div id="player"></div>
+</div>
+
+<div class="timeline-panel" id="timelinePanel">
+  <div class="timeline-ruler" id="timelineRuler"></div>
+  <div class="timeline" id="timeline">
+    <div class="handle start"></div>
+    <div class="handle end"></div>
+    <div id="playhead"></div>
+  </div>
+</div>
+
+<div class="control-group">
+  <div class="size-inputs">
+    <label>Width</label> <input type="number" id="screenWidth" value="80">
+    <label style="margin-top:4px">Height</label> <input type="number" id="screenHeight" value="24">
+  </div>
+  
+  <button id="applySizeBtn">Resize</button>
+  <div class="separator"></div>
+
+  <select id="speedSelect">
+    <option value="0.5">Speed: 0.5x</option>
+    <option value="1" selected>Speed: 1.0×</option>
+    <option value="1.5">Speed: 1.5×</option>
+    <option value="2">Speed: 2.0×</option>
+    <option value="3">Speed: 3.0x</option>
+  </select>
+
+  <div class="separator"></div>
+
+  <button id="addKeepBtn" class="highlight-btn">✨ Mark to KEEP</button>
+  
+  <button id="undoBtn">Undo</button>
+  <button id="redoBtn">Redo</button>
+  
+  <div class="spacer"></div>
+  
+  <button id="previewBtn">Preview</button>
+  <button id="editBtn" style="display:none;">Stop</button>
+  <button id="exportBtn" class="primary">Export .cast</button>
+</div>
+
+<script src="https://unpkg.com/asciinema-player@3.7.1/dist/bundle/asciinema-player.min.js"></script>
+
+<script>
+console.log("EDITOR LOADED - ANIME STYLE");
+
+const fileInput = document.getElementById("fileInput");
+const playerBox = document.getElementById("player");
+const timeline = document.getElementById("timeline");
+const ruler = document.getElementById("timelineRuler");
+const playhead = document.getElementById("playhead");
+const timelinePanel = document.getElementById("timelinePanel");
+const previewOverlay = document.getElementById("previewOverlay");
+const statusMsg = document.getElementById("statusMsg");
+
+const startHandle = document.querySelector(".handle.start");
+const endHandle   = document.querySelector(".handle.end");
+
+const addKeepBtn  = document.getElementById("addKeepBtn");
+const undoBtn     = document.getElementById("undoBtn");
+const redoBtn     = document.getElementById("redoBtn");
+const previewBtn  = document.getElementById("previewBtn");
+const editBtn     = document.getElementById("editBtn");
+const exportBtn   = document.getElementById("exportBtn");
+
+const speedSelect = document.getElementById("speedSelect");
+const applySizeBtn = document.getElementById("applySizeBtn");
+const screenWidthInput  = document.getElementById("screenWidth");
+const screenHeightInput = document.getElementById("screenHeight");
+
+let castData = null; 
+let duration = 0;    
+let player = null;
+
+let undoStack = [];
+let redoStack = [];
+
+let activeHandle = null;
+let scrubbing = false;
+
+let selections = []; 
+
+let isPreviewMode = false;
+
+/* ================= LOAD CAST ================= */
+fileInput.addEventListener("change", () => {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const lines = reader.result.split("\n").filter(Boolean);
+    try {
+        const header = JSON.parse(lines[0]);
+        const stdout = lines.slice(1).map(l => JSON.parse(l));
+
+        castData = { ...header, stdout };
+        duration = stdout.at(-1)[0];
+
+        screenWidthInput.value = castData.width;
+        screenHeightInput.value = castData.height;
+
+        loadPlayer(false);
+        setTimeout(initTimeline, 100);
+        
+        statusMsg.textContent = "Loaded! Mark the green sections you want to keep.";
+    } catch(e) {
+        alert("Error parsing .cast file");
+        console.error(e);
+    }
+  };
+  reader.readAsText(fileInput.files[0]);
+});
+
+/* ================= PLAYER LOGIC ================= */
+function loadPlayer(isTrimmed) {
+  if (!castData) return;
+
+  playerBox.innerHTML = ""; 
+
+  let dataToPlay = castData.stdout;
+  let width = parseInt(screenWidthInput.value, 10);
+  let height = parseInt(screenHeightInput.value, 10);
+
+  // If Previewing, calculate the stitched version
+  if (isTrimmed) {
+     dataToPlay = getStitchedStdout(false); 
+     if (dataToPlay.length === 0) {
+         alert("No sections marked! Please mark at least one section to keep.");
+         editBtn.click(); // force exit preview
+         return;
+     }
+  }
+
+  let text = JSON.stringify({
+    version: 2,
+    width: width,
+    height: height,
+    idle_time_limit: null
+  }) + "\n";
+
+  dataToPlay.forEach(e => text += JSON.stringify(e) + "\n");
+
+  const blob = new Blob([text], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  player = AsciinemaPlayer.create(url, playerBox, {
+    controls: true,
+    fit: 'none'
+  });
+
+  if (!isTrimmed) {
+      player.addEventListener("time", e => {
+        if (!scrubbing && !activeHandle) {
+            const pct = e.detail.time / duration;
+            playhead.style.left = (pct * timeline.clientWidth) + "px";
+        }
+      });
+  }
+}
+
+/* ================= DATA PROCESSING (KEEP MODE) ================= */
+// This function stitches together ONLY the marked "keep" sections
+function getStitchedStdout(applySpeed) {
+    if (!castData || !selections.length) return [];
+
+    let source = castData.stdout;
+    let final = [];
+    
+    // 1. Merge overlapping selections to avoid duplication
+    // Sort by start
+    let sorted = [...selections].sort((a, b) => a.start - b.start);
+    let merged = [];
+    
+    if (sorted.length > 0) {
+        let current = sorted[0];
+        for (let i = 1; i < sorted.length; i++) {
+            if (sorted[i].start < current.end) {
+                // Overlap: extend end if needed
+                current.end = Math.max(current.end, sorted[i].end);
+            } else {
+                merged.push(current);
+                current = sorted[i];
+            }
+        }
+        merged.push(current);
+    }
+
+    // 2. Extract and Stitch
+    let currentOutputTime = 0;
+
+    merged.forEach(interval => {
+        const chunk = source.filter(e => e[0] >= interval.start && e[0] <= interval.end);
+        
+        chunk.forEach(e => {
+            const newTime = (e[0] - interval.start) + currentOutputTime;
+            final.push([newTime, e[1], e[2]]);
+        });
+
+        currentOutputTime += (interval.end - interval.start);
+    });
+
+    if (applySpeed) {
+        const speed = parseFloat(speedSelect.value) || 1;
+        if (speed !== 1) {
+            final = final.map(e => [e[0] / speed, e[1], e[2]]);
+        }
+    }
+
+    return final;
+}
+
+/* ================= TIMELINE & HANDLES ================= */
+function initTimeline() {
+  drawTimeline();
+  resetHandles();
+  drawSelections();
+}
+
+function drawTimeline() {
+  ruler.innerHTML = "";
+  const w = timeline.clientWidth;
+  const step = duration > 60 ? 10 : 5; 
+  for (let t = 0; t <= duration; t += step) {
+    const tick = document.createElement("div");
+    tick.className = "timeline-tick";
+    tick.style.left = (t / duration) * w + "px";
+    tick.textContent = formatTime(t);
+    ruler.appendChild(tick);
+  }
+}
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function resetHandles() {
+  const w = timeline.clientWidth;
+  startHandle.style.left = "0px";
+  endHandle.style.left = (w - 14) + "px"; 
+}
+
+[startHandle, endHandle].forEach(h => {
+  h.addEventListener("mousedown", e => {
+    activeHandle = h;
+    e.preventDefault(); e.stopPropagation();
+  });
+});
+
+document.addEventListener("mouseup", () => {
+  activeHandle = null;
+  scrubbing = false;
+});
+
+document.addEventListener("mousemove", e => {
+  if (!activeHandle) return;
+  const rect = timeline.getBoundingClientRect();
+  let x = clamp(e.clientX - rect.left, 0, rect.width - 14);
+  
+  if (activeHandle === startHandle) x = Math.min(x, endHandle.offsetLeft);
+  else x = Math.max(x, startHandle.offsetLeft);
+  
+  activeHandle.style.left = x + "px";
+});
+
+timeline.addEventListener("mousedown", e => {
+    if(isPreviewMode) return;
+    if(e.target === startHandle || e.target === endHandle) return;
+    scrubbing = true;
+    updatePlayhead(e);
+});
+
+document.addEventListener("mousemove", e => {
+  if (!scrubbing || !player || isPreviewMode) return;
+  updatePlayhead(e);
+});
+
+function updatePlayhead(e) {
+    const rect = timeline.getBoundingClientRect();
+    const x = clamp(e.clientX - rect.left, 0, rect.width);
+    playhead.style.left = x + "px";
+    const t = (x / rect.width) * duration;
+    player.seek(t);
+}
+
+/* ================= MARK SELECTION (KEEP) ================= */
+addKeepBtn.onclick = () => {
+  if (isPreviewMode) return;
+
+  undoStack.push(snapshotState());
+  redoStack.length = 0;
+
+  const w = timeline.clientWidth;
+  const start = (startHandle.offsetLeft / w) * duration;
+  const end   = (endHandle.offsetLeft / w) * duration; 
+
+  if (end - start < 0.1) return;
+
+  selections.push({ start, end });
+  drawSelections();
+  statusMsg.textContent = `Marked for KEEP: ${formatTime(start)} - ${formatTime(end)}`;
+};
+
+function drawSelections() {
+  document.querySelectorAll(".keep-block").forEach(e => e.remove());
+  const w = timeline.clientWidth;
+  
+  selections.forEach(c => {
+    const d = document.createElement("div");
+    d.className = "keep-block";
+    d.style.left = (c.start / duration) * w + "px";
+    d.style.width = ((c.end - c.start) / duration) * w + "px";
+    timeline.appendChild(d);
+  });
+}
+
+/* ================= PREVIEW & EXPORT ================= */
+previewBtn.onclick = () => {
+    if(!castData) return;
+    if(selections.length === 0) {
+        alert("Nothing marked to keep! Drag handles and click 'Mark to KEEP'.");
+        return;
+    }
+
+    isPreviewMode = true;
+    timelinePanel.classList.add("disabled");
+    previewOverlay.style.display = "block";
+    previewBtn.style.display = "none";
+    editBtn.style.display = "inline-block";
+    addKeepBtn.disabled = true;
+    undoBtn.disabled = true;
+    
+    loadPlayer(true);
+    statusMsg.textContent = "Previewing exported result...";
+};
+
+editBtn.onclick = () => {
+    isPreviewMode = false;
+    timelinePanel.classList.remove("disabled");
+    previewOverlay.style.display = "none";
+    previewBtn.style.display = "inline-block";
+    editBtn.style.display = "none";
+    addKeepBtn.disabled = false;
+    undoBtn.disabled = false;
+    
+    loadPlayer(false);
+    statusMsg.textContent = "Editing mode";
+};
+
+exportBtn.onclick = () => {
+  if (!castData) return;
+  if (selections.length === 0) {
+      alert("No selections made. Cannot export empty video.");
+      return;
+  }
+
+  const finalStdout = getStitchedStdout(true);
+
+  if (!finalStdout.length) {
+      alert("Resulting video is empty.");
+      return;
+  }
+
+  const width = parseInt(screenWidthInput.value, 10);
+  const height = parseInt(screenHeightInput.value, 10);
+
+  let text = JSON.stringify({
+    version: 2,
+    width: width,
+    height: height,
+    idle_time_limit: null
+  }) + "\n";
+
+  finalStdout.forEach(e => text += JSON.stringify(e) + "\n");
+
+  const blob = new Blob([text], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "Trimming.cast";
+  a.click();
+  
+  statusMsg.textContent = "Highlights exported successfully.";
+};
+
+/* ================= UNDO/REDO & UTILS ================= */
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+function snapshotState() {
+  return {
+    selections: JSON.parse(JSON.stringify(selections)),
+    startX: startHandle.offsetLeft,
+    endX: endHandle.offsetLeft,
+  };
+}
+
+function restoreState(state) {
+  selections = JSON.parse(JSON.stringify(state.selections));
+  startHandle.style.left = state.startX + "px";
+  endHandle.style.left = state.endX + "px";
+  drawSelections();
+}
+
+undoBtn.onclick = () => {
+  if (isPreviewMode || !undoStack.length) return;
+  redoStack.push(snapshotState());
+  restoreState(undoStack.pop());
+};
+
+redoBtn.onclick = () => {
+  if (isPreviewMode || !redoStack.length) return;
+  undoStack.push(snapshotState());
+  restoreState(redoStack.pop());
+};
+
+applySizeBtn.onclick = () => {
+   if (!castData) return;
+   if(isPreviewMode) loadPlayer(true);
+   else loadPlayer(false);
+};
+</script>
+</body>
+</html>
