@@ -6,10 +6,8 @@
   <style>
     /* --- ANIME SKY THEME --- */
     body {
-      /* Anime Sky Gradient Background */
       background: linear-gradient(180deg, #d4fcff 0%, #ffffff 100%);
       background-attachment: fixed;
-      
       color: #4a5568;
       font-family: 'Segoe UI', Arial, sans-serif;
       padding: 20px;
@@ -19,7 +17,7 @@
       min-height: 100vh;
     }
 
-    /* Optional: Subtle cloud texture overlay */
+    /* Cloud Texture */
     body::before {
         content: "";
         position: fixed;
@@ -34,7 +32,6 @@
         pointer-events: none;
     }
 
-    /* Main Container Panel (Glassmorphism) */
     .app-container {
       width: 100%;
       max-width: 800px;
@@ -52,7 +49,7 @@
       border-bottom: 2px solid #e2e8f0; 
       padding-bottom: 15px; 
       margin-top: 0;
-      color: #3182ce; /* Anime Blue */
+      color: #3182ce;
       font-weight: 700;
       letter-spacing: 0.5px;
     }
@@ -97,6 +94,12 @@
       align-items: center;
       border: 1px solid #e2e8f0;
       box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .file-name { font-weight: 600; color: #2d3748; }
@@ -141,6 +144,7 @@
       background: #cbd5e0;
       border-color: #cbd5e0;
       box-shadow: none;
+      color: #fff;
     }
 
     .upload-btn {
@@ -165,6 +169,11 @@
       background: #e53e3e;
       color: white;
     }
+    
+    .options {
+        margin-bottom: 20px;
+        font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
@@ -174,23 +183,31 @@
 
   <h2>Combine Videos</h2>
   <p style="color:#718096; margin-bottom: 25px;">
-    Upload multiple .cast files. They will be merged in the order they appear below.
+    Upload multiple .cast files. You must upload at least 2 files to merge.
   </p>
 
   <div class="upload-zone">
     <input type="file" id="filesInput" accept=".cast" multiple style="display:none">
-    <button class="upload-btn" onclick="document.getElementById('filesInput').click()">Select .cast Files</button>
+    <button class="upload-btn" onclick="document.getElementById('filesInput').click()">+ Add .cast Files</button>
   </div>
 
   <ul id="fileList" class="file-list"></ul>
 
-  <button id="mergeBtn" class="primary-btn" disabled>Merge & Download</button>
+  <div class="options">
+      <label style="cursor:pointer; display:flex; align-items:center; gap: 10px;">
+          <input type="checkbox" id="clearScreenCheck" checked> 
+          <span>Insert "Clear Screen" between videos? (Recommended)</span>
+      </label>
+  </div>
+
+  <button id="mergeBtn" class="primary-btn" disabled>Add at least 2 files</button>
 </div>
 
 <script>
   const filesInput = document.getElementById("filesInput");
   const fileListEl = document.getElementById("fileList");
   const mergeBtn = document.getElementById("mergeBtn");
+  const clearScreenCheck = document.getElementById("clearScreenCheck");
 
   let filesData = [];
 
@@ -201,10 +218,19 @@
     for (const f of newFiles) {
       try {
         const text = await f.text();
-        const lines = text.split("\n").filter(Boolean);
+        const lines = text.split("\n").filter(Boolean); // Remove empty lines
+        
+        if (lines.length < 2) continue; // Skip invalid files
+
         const header = JSON.parse(lines[0]);
         const stdout = lines.slice(1).map(l => JSON.parse(l));
-        const duration = stdout.length ? stdout.at(-1)[0] : 0;
+        
+        // Robust duration calculation (compatible with older browsers)
+        let duration = 0;
+        if (stdout.length > 0) {
+            const lastEvent = stdout[stdout.length - 1]; // Safer than .at(-1)
+            duration = lastEvent[0];
+        }
 
         filesData.push({
           name: f.name,
@@ -218,6 +244,9 @@
       }
     }
 
+    // Reset input so you can select the same file again if needed
+    filesInput.value = "";
+    
     renderList();
   });
 
@@ -236,8 +265,15 @@
       fileListEl.appendChild(li);
     });
 
-    mergeBtn.disabled = filesData.length === 0;
-    mergeBtn.textContent = filesData.length > 0 ? `Merge ${filesData.length} Files` : "Merge & Download";
+    // --- FIX: ENFORCE 2 OR MORE FILES ---
+    const fileCount = filesData.length;
+    if (fileCount < 2) {
+        mergeBtn.disabled = true;
+        mergeBtn.textContent = fileCount === 0 ? "Add at least 2 files" : "Add 1 more file to merge";
+    } else {
+        mergeBtn.disabled = false;
+        mergeBtn.textContent = `Merge ${fileCount} Files & Download`;
+    }
   }
 
   window.removeFile = (index) => {
@@ -253,23 +289,31 @@
 
   // MERGE LOGIC
   mergeBtn.onclick = () => {
-    if (!filesData.length) return;
+    if (filesData.length < 2) return;
 
     // Use header from the first file
     const masterHeader = filesData[0].header;
     let combinedStdout = [];
     let currentTimeOffset = 0;
+    const insertClear = clearScreenCheck.checked;
 
-    filesData.forEach(file => {
-      // Shift all events in this file by the current offset
+    filesData.forEach((file, index) => {
+      // 1. Shift timestamps
       const shiftedEvents = file.stdout.map(e => {
         return [e[0] + currentTimeOffset, e[1], e[2]];
       });
 
+      // 2. Add Clear Screen code before the next file starts (except the first one)
+      // This prevents visual "garbage" from the previous file remaining on screen
+      if (index > 0 && insertClear) {
+          // Add a clear screen event just before the first event of the new file
+          // Code: \u001bc (Reset)
+          combinedStdout.push([currentTimeOffset, "o", "\u001bc"]); 
+      }
+
       combinedStdout = combinedStdout.concat(shiftedEvents);
       
-      // Update offset for the next file
-      // We add a small buffer (0.1s) to ensure no overlap overlap glitches
+      // 3. Update offset with buffer
       currentTimeOffset += file.duration + 0.1; 
     });
 
@@ -280,7 +324,7 @@
     const blob = new Blob([text], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "combined.cast";
+    a.download = "combined_video.cast";
     a.click();
   };
 </script>
