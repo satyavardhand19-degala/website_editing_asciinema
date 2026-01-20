@@ -246,6 +246,45 @@
       border-right: 2px solid #48bb78;
       pointer-events: none;
     }
+
+    /* --- USER MANUAL STYLES --- */
+    .manual-section {
+      margin-top: 50px;
+      padding: 30px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.6);
+    }
+    .manual-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .manual-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+      border: 1px solid #e2e8f0;
+      text-align: center;
+    }
+    .manual-icon {
+      font-size: 2em;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .manual-title {
+      font-weight: 700;
+      color: #3182ce;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .manual-text {
+      font-size: 0.9em;
+      color: #718096;
+      line-height: 1.4;
+    }
   </style>
 </head>
 
@@ -309,6 +348,32 @@
   <button id="previewBtn">Preview</button>
   <button id="editBtn" style="display:none;">Stop</button>
   <button id="exportBtn" class="primary">Export .cast</button>
+</div>
+
+<div class="manual-section">
+    <h3 style="margin-top:0; color:#4a5568;">📖 How to Use</h3>
+    <div class="manual-grid">
+        <div class="manual-card">
+            <span class="manual-icon">📂</span>
+            <span class="manual-title">1. Upload</span>
+            <span class="manual-text">Select your <b>.cast</b> file. The video player will load automatically.</span>
+        </div>
+        <div class="manual-card">
+            <span class="manual-icon">✂️</span>
+            <span class="manual-title">2. Select & Keep</span>
+            <span class="manual-text">Drag the blue handles to select a part you want to <b>KEEP</b>. Click the <b>✨CUT</b> button to save that selection (Green Block).</span>
+        </div>
+        <div class="manual-card">
+            <span class="manual-icon">🎨</span>
+            <span class="manual-title">3. Customize</span>
+            <span class="manual-text">Adjust the Width/Height or change the Speed of the video using the dropdown.</span>
+        </div>
+        <div class="manual-card">
+            <span class="manual-icon">💾</span>
+            <span class="manual-title">4. Export</span>
+            <span class="manual-text">Click <b>Preview</b> to check your edits. If satisfied, click <b>Export .cast</b> to download the new file.</span>
+        </div>
+    </div>
 </div>
 
 <script src="https://unpkg.com/asciinema-player@3.7.1/dist/bundle/asciinema-player.min.js"></script>
