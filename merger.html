@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Asciinema Merger</title>
   <style>
     /* --- ANIME SKY THEME --- */
@@ -14,10 +15,9 @@
       margin: 0;
       display: flex;
       justify-content: center;
-      min-height: 100vh;
+      min-height: 100vh; /* Fixed height issue */
     }
 
-    /* Cloud Texture */
     body::before {
         content: "";
         position: fixed;
@@ -43,6 +43,7 @@
       border-radius: 12px;
       margin-top: 20px;
       height: fit-content;
+      box-sizing: border-box; /* Ensures padding doesn't break width */
     }
 
     h2 { 
@@ -102,7 +103,7 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .file-name { font-weight: 600; color: #2d3748; }
+    .file-name { font-weight: 600; color: #2d3748; word-break: break-all; margin-right: 10px; }
     .file-info { color: #718096; font-size: 0.9em; margin-right: 15px; font-family: monospace; }
 
     button {
@@ -174,6 +175,38 @@
         margin-bottom: 20px;
         font-size: 0.9rem;
     }
+
+    /* --- MOBILE RESPONSIVENESS --- */
+    @media (max-width: 600px) {
+        .app-container {
+            padding: 20px;
+            margin-top: 0;
+            width: 100%;
+        }
+
+        .upload-zone { padding: 20px; }
+
+        .file-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .file-item > div {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .options label {
+            align-items: flex-start;
+        }
+        
+        .options input[type="checkbox"] {
+            margin-top: 3px;
+        }
+    }
   </style>
 </head>
 <body>
@@ -211,24 +244,22 @@
 
   let filesData = [];
 
-  // Handle File Selection
   filesInput.addEventListener("change", async () => {
     const newFiles = Array.from(filesInput.files);
     
     for (const f of newFiles) {
       try {
         const text = await f.text();
-        const lines = text.split("\n").filter(Boolean); // Remove empty lines
+        const lines = text.split("\n").filter(Boolean);
         
-        if (lines.length < 2) continue; // Skip invalid files
+        if (lines.length < 2) continue; 
 
         const header = JSON.parse(lines[0]);
         const stdout = lines.slice(1).map(l => JSON.parse(l));
         
-        // Robust duration calculation (compatible with older browsers)
         let duration = 0;
         if (stdout.length > 0) {
-            const lastEvent = stdout[stdout.length - 1]; // Safer than .at(-1)
+            const lastEvent = stdout[stdout.length - 1];
             duration = lastEvent[0];
         }
 
@@ -244,9 +275,7 @@
       }
     }
 
-    // Reset input so you can select the same file again if needed
     filesInput.value = "";
-    
     renderList();
   });
 
@@ -265,7 +294,6 @@
       fileListEl.appendChild(li);
     });
 
-    // --- FIX: ENFORCE 2 OR MORE FILES ---
     const fileCount = filesData.length;
     if (fileCount < 2) {
         mergeBtn.disabled = true;
@@ -287,37 +315,27 @@
     return `${m}:${s.toString().padStart(2, "0")}`;
   }
 
-  // MERGE LOGIC
   mergeBtn.onclick = () => {
     if (filesData.length < 2) return;
 
-    // Use header from the first file
     const masterHeader = filesData[0].header;
     let combinedStdout = [];
     let currentTimeOffset = 0;
     const insertClear = clearScreenCheck.checked;
 
     filesData.forEach((file, index) => {
-      // 1. Shift timestamps
       const shiftedEvents = file.stdout.map(e => {
         return [e[0] + currentTimeOffset, e[1], e[2]];
       });
 
-      // 2. Add Clear Screen code before the next file starts (except the first one)
-      // This prevents visual "garbage" from the previous file remaining on screen
       if (index > 0 && insertClear) {
-          // Add a clear screen event just before the first event of the new file
-          // Code: \u001bc (Reset)
           combinedStdout.push([currentTimeOffset, "o", "\u001bc"]); 
       }
 
       combinedStdout = combinedStdout.concat(shiftedEvents);
-      
-      // 3. Update offset with buffer
       currentTimeOffset += file.duration + 0.1; 
     });
 
-    // Generate output
     let text = JSON.stringify(masterHeader) + "\n";
     combinedStdout.forEach(e => text += JSON.stringify(e) + "\n");
 

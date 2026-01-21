@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Asciinema Editor</title>
   <link rel="stylesheet" href="https://unpkg.com/asciinema-player@3.7.1/dist/bundle/asciinema-player.css">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
@@ -9,19 +10,17 @@
   <style>
     /* --- ANIME SKY THEME --- */
     body {
-      /* Anime Sky Gradient Background */
       background: linear-gradient(180deg, #d4fcff 0%, #ffffff 100%);
       background-attachment: fixed;
-      
       color: #4a5568;
-      font-family: 'Nunito', 'Segoe UI', sans-serif; /* Softer, anime-like font */
+      font-family: 'Nunito', 'Segoe UI', sans-serif;
       padding: 20px;
       max-width: 1000px;
       margin: 0 auto;
       min-height: 100vh;
+      overflow-x: hidden;
     }
 
-    /* Optional: Add a subtle cloud texture using CSS radial gradients */
     body::before {
         content: "";
         position: fixed;
@@ -38,7 +37,7 @@
 
     h2 { 
         margin-top: 0; 
-        color: #3182ce; /* Anime Blue */
+        color: #3182ce;
         font-weight: 700;
         letter-spacing: 0.5px;
     }
@@ -72,6 +71,8 @@
       border: 1px solid rgba(255, 255, 255, 0.8);
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
       margin-bottom: 20px;
+      flex-wrap: wrap; /* Allow wrapping on mobile */
+      gap: 15px;
     }
 
     .control-group {
@@ -108,6 +109,7 @@
       font-size: 0.9em;
       min-height: 1.2em;
       font-weight: 600;
+      text-align: right;
     }
 
     /* --- INPUTS & BUTTONS --- */
@@ -142,28 +144,11 @@
     }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* Primary Action Buttons */
-    button.primary { 
-        background: #3182ce; 
-        color: #fff; 
-        border: 2px solid #3182ce; 
-    }
-    button.primary:hover { 
-        background: #2b6cb0; 
-        border-color: #2b6cb0;
-        box-shadow: 0 4px 6px rgba(66, 153, 225, 0.3);
-    }
+    button.primary { background: #3182ce; color: #fff; border: 2px solid #3182ce; }
+    button.primary:hover { background: #2b6cb0; border-color: #2b6cb0; }
 
-    button.highlight-btn { 
-        background: #38b2ac; 
-        color: #fff; 
-        border: 2px solid #38b2ac; 
-    }
-    button.highlight-btn:hover { 
-        background: #319795; 
-        border-color: #319795;
-        box-shadow: 0 4px 6px rgba(56, 178, 172, 0.3);
-    }
+    button.highlight-btn { background: #38b2ac; color: #fff; border: 2px solid #38b2ac; }
+    button.highlight-btn:hover { background: #319795; border-color: #319795; }
 
     /* --- PLAYER & TIMELINE --- */
     #playerContainer {
@@ -174,7 +159,7 @@
       background: #000;
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1); /* Soft shadow */
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     }
 
     #previewOverlay {
@@ -212,24 +197,31 @@
       background: #edf2f7; 
       border-radius: 8px; 
       border: 2px solid #e2e8f0;
+      /* Prevent touch scrolling on the timeline itself */
+      touch-action: none; 
     }
 
-    /* Cute Handles */
     .handle {
       position: absolute; width: 14px; height: 100%;
       background: #63b3ed; cursor: col-resize; z-index: 20; top: 0;
       border-radius: 4px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      /* Make touch target bigger visually */
+      touch-action: none;
     }
-    .handle:hover { background: #4299e1; transform: scale(1.1); transition: transform 0.1s; }
+    
+    .handle::after {
+        /* Invisible Hit box for easier mobile dragging */
+        content: ''; position: absolute; left: -10px; right: -10px; top:0; bottom:0;
+    }
+    
     .handle.start { left: 0; }
     .handle.end { right: 0; }
 
     #playhead {
       position: absolute; top: -6px; width: 3px; height: 48px;
-      background: #f687b3; /* Anime Pink */
+      background: #f687b3;
       z-index: 30; pointer-events: none; border-radius: 3px;
-      box-shadow: 0 2px 5px rgba(246, 135, 179, 0.5);
     }
 
     .keep-block {
@@ -247,7 +239,7 @@
       pointer-events: none;
     }
 
-    /* --- USER MANUAL STYLES --- */
+    /* --- MANUAL SECTION --- */
     .manual-section {
       margin-top: 50px;
       padding: 30px;
@@ -269,21 +261,61 @@
       border: 1px solid #e2e8f0;
       text-align: center;
     }
-    .manual-icon {
-      font-size: 2em;
-      margin-bottom: 10px;
-      display: block;
-    }
-    .manual-title {
-      font-weight: 700;
-      color: #3182ce;
-      margin-bottom: 8px;
-      display: block;
-    }
-    .manual-text {
-      font-size: 0.9em;
-      color: #718096;
-      line-height: 1.4;
+    .manual-icon { font-size: 2em; margin-bottom: 10px; display: block; }
+    .manual-title { font-weight: 700; color: #3182ce; margin-bottom: 8px; display: block; }
+    .manual-text { font-size: 0.9em; color: #718096; line-height: 1.4; }
+
+    /* --- MOBILE ADJUSTMENTS --- */
+    @media (max-width: 600px) {
+        body { padding: 10px; }
+        
+        .loader-container { flex-direction: column; align-items: flex-start; }
+        .status-bar { text-align: left; margin-top: 5px; }
+
+        .control-group { 
+            justify-content: space-between; 
+            padding: 15px; 
+            gap: 10px; 
+        }
+
+        .size-inputs {
+            flex-direction: row;
+            width: 100%;
+            justify-content: space-between;
+            margin-right: 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .separator { display: none; } /* Hide vertical separators */
+        .spacer { display: none; }    /* Remove spacer to pack buttons */
+
+        /* Make buttons take up 48% width (2 per row) */
+        button { 
+            flex: 1 1 40%; 
+            font-size: 0.9rem;
+        }
+        
+        #speedSelect {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        /* Specific full width for important buttons */
+        #addKeepBtn, #exportBtn {
+            flex: 1 1 100%;
+            padding: 12px;
+        }
+
+        /* Timeline Taller for Touch */
+        .timeline { height: 50px; }
+        .handle { width: 25px; border-radius: 6px; }
+        #playhead { height: 60px; top: -5px; }
+        
+        /* Manual Section */
+        .manual-section { padding: 15px; }
+        .manual-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -298,9 +330,9 @@
 <a href="index.html" class="back-link">← Back to Home</a>
 
 <div class="loader-container">
-    <div>
+    <div style="width: 100%;">
         <label style="display:block; font-size:0.75em; font-weight:700; color:#a0aec0; margin-bottom:4px;">UPLOAD FILE</label>
-        <input type="file" id="fileInput" accept=".cast">
+        <input type="file" id="fileInput" accept=".cast" style="width: 100%;">
     </div>
     <div id="statusMsg" class="status-bar">Waiting for file...</div>
 </div>
@@ -321,8 +353,8 @@
 
 <div class="control-group">
   <div class="size-inputs">
-    <label>Width</label> <input type="number" id="screenWidth" value="80">
-    <label style="margin-top:4px">Height</label> <input type="number" id="screenHeight" value="24">
+    <div><label>Width</label> <input type="number" id="screenWidth" value="80"></div>
+    <div><label>Height</label> <input type="number" id="screenHeight" value="24"></div>
   </div>
   
   <button id="applySizeBtn">Resize</button>
@@ -338,7 +370,7 @@
 
   <div class="separator"></div>
 
-  <button id="addKeepBtn" class="highlight-btn">✨CUT</button>
+  <button id="addKeepBtn" class="highlight-btn">✨CUT (Keep)</button>
   
   <button id="undoBtn">Undo</button>
   <button id="redoBtn">Redo</button>
@@ -361,7 +393,7 @@
         <div class="manual-card">
             <span class="manual-icon">✂️</span>
             <span class="manual-title">2. Select & Keep</span>
-            <span class="manual-text">Drag the blue handles to select a part you want to <b>KEEP</b>. Click the <b>✨CUT</b> button to save that selection (Green Block).</span>
+            <span class="manual-text">Drag the blue handles to select a part you want to <b>KEEP</b>. Click <b>✨CUT</b> to save that selection.</span>
         </div>
         <div class="manual-card">
             <span class="manual-icon">🎨</span>
@@ -371,7 +403,7 @@
         <div class="manual-card">
             <span class="manual-icon">💾</span>
             <span class="manual-title">4. Export</span>
-            <span class="manual-text">Click <b>Preview</b> to check your edits. If satisfied, click <b>Export .cast</b> to download the new file.</span>
+            <span class="manual-text">Click <b>Preview</b> to check your edits. If satisfied, click <b>Export .cast</b>.</span>
         </div>
     </div>
 </div>
@@ -379,7 +411,7 @@
 <script src="https://unpkg.com/asciinema-player@3.7.1/dist/bundle/asciinema-player.min.js"></script>
 
 <script>
-console.log("EDITOR LOADED - ANIME STYLE");
+console.log("EDITOR LOADED - RESPONSIVE");
 
 const fileInput = document.getElementById("fileInput");
 const playerBox = document.getElementById("player");
@@ -408,15 +440,11 @@ const screenHeightInput = document.getElementById("screenHeight");
 let castData = null; 
 let duration = 0;    
 let player = null;
-
 let undoStack = [];
 let redoStack = [];
-
 let activeHandle = null;
 let scrubbing = false;
-
 let selections = []; 
-
 let isPreviewMode = false;
 
 /* ================= LOAD CAST ================= */
@@ -437,13 +465,13 @@ fileInput.addEventListener("change", () => {
         loadPlayer(false);
         setTimeout(initTimeline, 100);
         
-        statusMsg.textContent = "Loaded! Mark the green sections you want to keep.";
+        statusMsg.textContent = "Loaded! Mark sections to keep.";
     } catch(e) {
-        alert(".cast file upload successfully");
+        alert("Failed to parse .cast file");
         console.error(e);
     }
   };
-  reader.readAsText(fileInput.files[0]);
+  if(fileInput.files.length > 0) reader.readAsText(fileInput.files[0]);
 });
 
 /* ================= PLAYER LOGIC ================= */
@@ -456,12 +484,11 @@ function loadPlayer(isTrimmed) {
   let width = parseInt(screenWidthInput.value, 10);
   let height = parseInt(screenHeightInput.value, 10);
 
-  // If Previewing, calculate the stitched version
   if (isTrimmed) {
      dataToPlay = getStitchedStdout(false); 
      if (dataToPlay.length === 0) {
          alert("No sections marked! Please mark at least one section to keep.");
-         editBtn.click(); // force exit preview
+         editBtn.click(); 
          return;
      }
   }
@@ -480,7 +507,7 @@ function loadPlayer(isTrimmed) {
 
   player = AsciinemaPlayer.create(url, playerBox, {
     controls: true,
-    fit: 'none'
+    fit: 'width' /* Changed fit to width for mobile */
   });
 
   if (!isTrimmed) {
@@ -493,16 +520,13 @@ function loadPlayer(isTrimmed) {
   }
 }
 
-/* ================= DATA PROCESSING (KEEP MODE) ================= */
-// This function stitches together ONLY the marked "keep" sections
+/* ================= DATA PROCESSING ================= */
 function getStitchedStdout(applySpeed) {
     if (!castData || !selections.length) return [];
 
     let source = castData.stdout;
     let final = [];
     
-    // 1. Merge overlapping selections to avoid duplication
-    // Sort by start
     let sorted = [...selections].sort((a, b) => a.start - b.start);
     let merged = [];
     
@@ -510,7 +534,6 @@ function getStitchedStdout(applySpeed) {
         let current = sorted[0];
         for (let i = 1; i < sorted.length; i++) {
             if (sorted[i].start < current.end) {
-                // Overlap: extend end if needed
                 current.end = Math.max(current.end, sorted[i].end);
             } else {
                 merged.push(current);
@@ -520,17 +543,13 @@ function getStitchedStdout(applySpeed) {
         merged.push(current);
     }
 
-    // 2. Extract and Stitch
     let currentOutputTime = 0;
-
     merged.forEach(interval => {
         const chunk = source.filter(e => e[0] >= interval.start && e[0] <= interval.end);
-        
         chunk.forEach(e => {
             const newTime = (e[0] - interval.start) + currentOutputTime;
             final.push([newTime, e[1], e[2]]);
         });
-
         currentOutputTime += (interval.end - interval.start);
     });
 
@@ -540,15 +559,21 @@ function getStitchedStdout(applySpeed) {
             final = final.map(e => [e[0] / speed, e[1], e[2]]);
         }
     }
-
     return final;
 }
 
-/* ================= TIMELINE & HANDLES ================= */
+/* ================= TIMELINE LOGIC ================= */
 function initTimeline() {
   drawTimeline();
   resetHandles();
   drawSelections();
+  
+  // Re-draw on resize to keep handles correct relative to width
+  window.addEventListener('resize', () => {
+      drawTimeline();
+      drawSelections();
+      // Reset handles to 0/100% just to be safe on drastic resize, or calculate %
+  });
 }
 
 function drawTimeline() {
@@ -559,7 +584,9 @@ function drawTimeline() {
     const tick = document.createElement("div");
     tick.className = "timeline-tick";
     tick.style.left = (t / duration) * w + "px";
-    tick.textContent = formatTime(t);
+    if (w > 400 || t % (step*2) === 0) { // Hide some labels on small screens
+        tick.textContent = formatTime(t);
+    }
     ruler.appendChild(tick);
   }
 }
@@ -573,56 +600,79 @@ function formatTime(sec) {
 function resetHandles() {
   const w = timeline.clientWidth;
   startHandle.style.left = "0px";
-  endHandle.style.left = (w - 14) + "px"; 
+  endHandle.style.left = (w - (window.innerWidth < 600 ? 25 : 14)) + "px"; 
+}
+
+/* Touch Support for Handles */
+function handleMoveStart(e) {
+    activeHandle = e.target.closest('.handle'); // Ensure we get the handle even if clicking hit-box
+    if(activeHandle) {
+        e.preventDefault(); 
+        e.stopPropagation();
+    }
 }
 
 [startHandle, endHandle].forEach(h => {
-  h.addEventListener("mousedown", e => {
-    activeHandle = h;
-    e.preventDefault(); e.stopPropagation();
-  });
+  h.addEventListener("mousedown", handleMoveStart);
+  h.addEventListener("touchstart", handleMoveStart, {passive: false});
 });
 
-document.addEventListener("mouseup", () => {
+function handleMoveEnd() {
   activeHandle = null;
   scrubbing = false;
-});
+}
 
-document.addEventListener("mousemove", e => {
+document.addEventListener("mouseup", handleMoveEnd);
+document.addEventListener("touchend", handleMoveEnd);
+
+function handleMove(e) {
   if (!activeHandle) return;
+  
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
   const rect = timeline.getBoundingClientRect();
-  let x = clamp(e.clientX - rect.left, 0, rect.width - 14);
+  const handleWidth = activeHandle.offsetWidth;
+  
+  let x = clamp(clientX - rect.left, 0, rect.width - handleWidth);
   
   if (activeHandle === startHandle) x = Math.min(x, endHandle.offsetLeft);
   else x = Math.max(x, startHandle.offsetLeft);
   
   activeHandle.style.left = x + "px";
-});
-
-timeline.addEventListener("mousedown", e => {
-    if(isPreviewMode) return;
-    if(e.target === startHandle || e.target === endHandle) return;
-    scrubbing = true;
-    updatePlayhead(e);
-});
-
-document.addEventListener("mousemove", e => {
-  if (!scrubbing || !player || isPreviewMode) return;
-  updatePlayhead(e);
-});
-
-function updatePlayhead(e) {
-    const rect = timeline.getBoundingClientRect();
-    const x = clamp(e.clientX - rect.left, 0, rect.width);
-    playhead.style.left = x + "px";
-    const t = (x / rect.width) * duration;
-    player.seek(t);
 }
 
-/* ================= MARK SELECTION (KEEP) ================= */
+document.addEventListener("mousemove", handleMove);
+document.addEventListener("touchmove", handleMove, {passive: false});
+
+/* Scrubbing Logic */
+timeline.addEventListener("mousedown", startScrub);
+timeline.addEventListener("touchstart", startScrub, {passive: false});
+
+function startScrub(e) {
+    if(isPreviewMode) return;
+    if(e.target.classList.contains('handle') || e.target.closest('.handle')) return;
+    scrubbing = true;
+    updatePlayhead(e);
+}
+
+function updatePlayhead(e) {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const rect = timeline.getBoundingClientRect();
+    const x = clamp(clientX - rect.left, 0, rect.width);
+    playhead.style.left = x + "px";
+    
+    if(player) {
+        const t = (x / rect.width) * duration;
+        player.seek(t);
+    }
+}
+
+document.addEventListener("mousemove", e => { if(scrubbing) updatePlayhead(e); });
+document.addEventListener("touchmove", e => { if(scrubbing) updatePlayhead(e); });
+
+
+/* ================= BUTTONS ================= */
 addKeepBtn.onclick = () => {
   if (isPreviewMode) return;
-
   undoStack.push(snapshotState());
   redoStack.length = 0;
 
@@ -634,7 +684,7 @@ addKeepBtn.onclick = () => {
 
   selections.push({ start, end });
   drawSelections();
-  statusMsg.textContent = `Marked for KEEP: ${formatTime(start)} - ${formatTime(end)}`;
+  statusMsg.textContent = `Marked: ${formatTime(start)} - ${formatTime(end)}`;
 };
 
 function drawSelections() {
@@ -650,14 +700,12 @@ function drawSelections() {
   });
 }
 
-/* ================= PREVIEW & EXPORT ================= */
 previewBtn.onclick = () => {
     if(!castData) return;
     if(selections.length === 0) {
-        alert("Nothing marked to keep! Drag handles and click 'Mark to KEEP'.");
+        alert("Nothing marked to keep!");
         return;
     }
-
     isPreviewMode = true;
     timelinePanel.classList.add("disabled");
     previewOverlay.style.display = "block";
@@ -667,7 +715,7 @@ previewBtn.onclick = () => {
     undoBtn.disabled = true;
     
     loadPlayer(true);
-    statusMsg.textContent = "Previewing exported result...";
+    statusMsg.textContent = "Previewing...";
 };
 
 editBtn.onclick = () => {
@@ -684,18 +732,9 @@ editBtn.onclick = () => {
 };
 
 exportBtn.onclick = () => {
-  if (!castData) return;
-  if (selections.length === 0) {
-      alert("No selections made. Cannot export empty video.");
-      return;
-  }
-
+  if (!castData || !selections.length) return;
   const finalStdout = getStitchedStdout(true);
-
-  if (!finalStdout.length) {
-      alert("Resulting video is empty.");
-      return;
-  }
+  if (!finalStdout.length) return;
 
   const width = parseInt(screenWidthInput.value, 10);
   const height = parseInt(screenHeightInput.value, 10);
@@ -715,10 +754,9 @@ exportBtn.onclick = () => {
   a.download = "Trimming.cast";
   a.click();
   
-  statusMsg.textContent = "Highlights exported successfully.";
+  statusMsg.textContent = "Exported!";
 };
 
-/* ================= UNDO/REDO & UTILS ================= */
 function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 
 function snapshotState() {
@@ -750,8 +788,7 @@ redoBtn.onclick = () => {
 
 applySizeBtn.onclick = () => {
    if (!castData) return;
-   if(isPreviewMode) loadPlayer(true);
-   else loadPlayer(false);
+   loadPlayer(isPreviewMode);
 };
 </script>
 </body>

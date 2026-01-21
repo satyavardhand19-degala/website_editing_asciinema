@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Asciinema Studio</title>
   <style>
     /* --- RESET & FONTS --- */
@@ -15,14 +16,14 @@
       font-family: 'Segoe UI', sans-serif;
       background-color: #ffffff;
       color: #333;
-      height: 100vh;
+      min-height: 100vh; /* Changed from height:100vh to min-height to allow scrolling */
       display: flex;
       flex-direction: column;
-      overflow: hidden; /* Keeps it strictly one screen */
+      overflow-x: hidden; /* Only hide horizontal overflow */
       position: relative;
     }
 
-    /* --- DECORATIVE BACKGROUND BLOBS (To match the purple/green gradients in image) --- */
+    /* --- DECORATIVE BACKGROUND BLOBS --- */
     body::before {
       content: '';
       position: absolute;
@@ -56,38 +57,16 @@
     .logo {
       font-size: 1.5rem;
       font-weight: 700;
-      color: #4e54c8; /* Purple-blue brand color */
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 30px;
-    }
-
-    .nav-links a {
-      text-decoration: none;
-      color: #777;
-      font-size: 0.9rem;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-
-    .nav-links a:hover, .nav-links a.active {
       color: #4e54c8;
     }
 
-    .search-icon {
-      color: #ccc;
-      cursor: pointer;
-    }
-
-    /* --- MAIN HERO SECTION --- */
+    /* --- HERO SECTION --- */
     .hero-container {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 60px;
-      flex: 1; /* Takes remaining height */
+      flex: 1;
       max-width: 1400px;
       margin: 0 auto;
       width: 100%;
@@ -102,7 +81,7 @@
 
     h1 {
       font-size: 3.5rem;
-      color: #1a1a2e; /* Dark Navy for text */
+      color: #1a1a2e;
       margin-bottom: 20px;
       line-height: 1.2;
     }
@@ -113,13 +92,13 @@
 
     .description {
       font-size: 1rem;
-      color: #8898aa; /* Muted grey blue */
+      color: #8898aa;
       margin-bottom: 40px;
       line-height: 1.6;
       max-width: 450px;
     }
 
-    /* --- BUTTONS (Replacing the old Cards) --- */
+    /* --- BUTTONS --- */
     .btn-group {
       display: flex;
       gap: 20px;
@@ -127,17 +106,18 @@
 
     .btn {
       padding: 15px 35px;
-      border-radius: 50px; /* Pill shape */
+      border-radius: 50px;
       text-decoration: none;
       font-weight: 600;
       font-size: 1rem;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
       display: flex;
       align-items: center;
+      justify-content: center; /* Center text in button */
       gap: 10px;
+      white-space: nowrap; /* Prevent text wrapping inside button */
     }
 
-    /* Primary Button (Solid Blue) - Trimming */
     .btn-primary {
       background-color: #5e72e4;
       color: white;
@@ -151,7 +131,6 @@
       box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
     }
 
-    /* Secondary Button (Outline) - Merger */
     .btn-outline {
       background-color: transparent;
       color: #5e72e4;
@@ -172,22 +151,52 @@
       position: relative;
     }
 
-    /* Using the uploaded image as the hero graphic */
     .hero-image {
       max-width: 100%;
       height: auto;
-      /* Optional: Drop shadow to make the image pop off the white background */
       filter: drop-shadow(0 20px 40px rgba(0,0,0,0.1));
-      transform: perspective(1000px) rotateY(-5deg); /* Slight 3D effect */
+      transform: perspective(1000px) rotateY(-5deg);
     }
 
-    /* --- FOOTER --- */
-    .footer-note {
-      position: absolute;
-      bottom: 30px;
-      left: 60px;
-      font-size: 0.8rem;
-      color: #adb5bd;
+    /* --- MOBILE RESPONSIVENESS (ADDED) --- */
+    @media (max-width: 992px) {
+        nav { padding: 20px 30px; }
+        .hero-container { 
+            flex-direction: column; /* Stack vertically */
+            padding: 20px 30px; 
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .left-content {
+            padding-right: 0;
+            max-width: 100%;
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .description { margin-left: auto; margin-right: auto; }
+        
+        .hero-image {
+            transform: none; /* Remove 3D effect on mobile for better fit */
+            max-width: 80%;
+        }
+    }
+
+    @media (max-width: 600px) {
+        h1 { font-size: 2.5rem; }
+        
+        .btn-group {
+            flex-direction: column; /* Stack buttons vertically */
+            width: 100%;
+        }
+        
+        .btn { width: 100%; }
+        
+        nav { justify-content: center; }
+        .hero-image { max-width: 100%; }
     }
 
   </style>
@@ -224,7 +233,6 @@
     </div>
 
   </div>
-
 
 </body>
 </html>
