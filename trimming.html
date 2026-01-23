@@ -6,7 +6,7 @@
   <title>Asciinema Editor</title>
   <link rel="stylesheet" href="https://unpkg.com/asciinema-player@3.7.1/dist/bundle/asciinema-player.css">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-  
+   
   <style>
     /* --- ANIME SKY THEME --- */
     body {
@@ -15,7 +15,7 @@
       color: #4a5568;
       font-family: 'Nunito', 'Segoe UI', sans-serif;
       padding: 20px;
-      max-width: 1000px;
+      max-width: 1200px; /* Increased max-width for side-by-side layout */
       margin: 0 auto;
       min-height: 100vh;
       overflow-x: hidden;
@@ -59,57 +59,82 @@
     }
     .back-link:hover { color: #3182ce; }
 
+    /* --- LAYOUT GRID --- */
+    .editor-grid {
+        display: grid;
+        grid-template-columns: 280px 1fr; /* Left Sidebar | Right Content */
+        gap: 25px;
+        align-items: start;
+    }
+
+    /* --- SIDEBAR TOOLS --- */
+    .tools-sidebar {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 10px 15px -3px rgba(164, 202, 254, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      position: sticky;
+      top: 20px; /* Sticks when scrolling */
+    }
+
+    .tool-block {
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .tool-block:last-child { border-bottom: none; padding-bottom: 0; }
+    
+    .tool-label {
+        font-size: 0.75em; 
+        font-weight: 800; 
+        color: #a0aec0; 
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* --- RIGHT CONTENT AREA --- */
+    .content-area {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        min-width: 0; /* Prevents flex items from overflowing grid */
+    }
+
     /* --- GLASSMORPHISM PANELS --- */
     .loader-container {
       display: flex; 
       justify-content: space-between; 
-      align-items: flex-end;
+      align-items: center;
       background: rgba(255, 255, 255, 0.6);
       backdrop-filter: blur(10px);
       padding: 15px;
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.8);
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-      margin-bottom: 20px;
-      flex-wrap: wrap; /* Allow wrapping on mobile */
       gap: 15px;
     }
 
-    .control-group {
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(10px);
-      padding: 20px;
-      border-radius: 12px;
-      margin-top: 20px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      box-shadow: 0 10px 15px -3px rgba(164, 202, 254, 0.1);
-    }
-
     .size-inputs {
-      display: flex; 
-      flex-direction: column; 
-      gap: 5px; 
-      margin-right: 15px;
+      display: grid; 
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
-    .size-inputs label { font-size: 0.8em; font-weight: 700; color: #718096; }
-    .size-inputs input { width: 60px; }
-
-    .separator {
-      width: 1px; height: 35px; background: #cbd5e0; margin: 0 10px;
-    }
-
-    .spacer { flex-grow: 1; }
+    .size-inputs div { display: flex; flex-direction: column; }
+    .size-inputs label { font-size: 0.8em; font-weight: 700; color: #718096; margin-bottom: 3px; }
+    .size-inputs input { width: 100%; box-sizing: border-box; }
 
     .status-bar {
       color: #3182ce;
       font-size: 0.9em;
-      min-height: 1.2em;
       font-weight: 600;
-      text-align: right;
+      white-space: nowrap;
     }
 
     /* --- INPUTS & BUTTONS --- */
@@ -122,11 +147,13 @@
       font-family: inherit;
       outline: none;
       transition: border-color 0.2s;
+      width: 100%; /* Full width for sidebar */
+      box-sizing: border-box;
     }
     input:focus, select:focus { border-color: #63b3ed; }
 
     button {
-      padding: 8px 16px;
+      padding: 10px 16px;
       cursor: pointer;
       background: #ffffff;
       color: #4a5568;
@@ -135,6 +162,7 @@
       transition: all 0.2s;
       font-weight: 700;
       box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      width: 100%; /* Buttons take full width in sidebar */
     }
 
     button:hover:not(:disabled) { 
@@ -150,10 +178,14 @@
     button.highlight-btn { background: #38b2ac; color: #fff; border: 2px solid #38b2ac; }
     button.highlight-btn:hover { background: #319795; border-color: #319795; }
 
+    .btn-group {
+        display: flex;
+        gap: 8px;
+    }
+
     /* --- PLAYER & TIMELINE --- */
     #playerContainer {
       position: relative;
-      margin-top: 20px;
       border: none;
       min-height: 200px;
       background: #000;
@@ -176,7 +208,7 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
 
-    .timeline-panel { margin-top: 30px; user-select: none; position: relative; }
+    .timeline-panel { user-select: none; position: relative; padding: 10px 0; }
     .timeline-panel.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(0.5); }
 
     .timeline-ruler {
@@ -197,7 +229,6 @@
       background: #edf2f7; 
       border-radius: 8px; 
       border: 2px solid #e2e8f0;
-      /* Prevent touch scrolling on the timeline itself */
       touch-action: none; 
     }
 
@@ -206,15 +237,11 @@
       background: #63b3ed; cursor: col-resize; z-index: 20; top: 0;
       border-radius: 4px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      /* Make touch target bigger visually */
       touch-action: none;
     }
-    
-    .handle::after {
-        /* Invisible Hit box for easier mobile dragging */
-        content: ''; position: absolute; left: -10px; right: -10px; top:0; bottom:0;
-    }
-    
+      
+    .handle::after { content: ''; position: absolute; left: -10px; right: -10px; top:0; bottom:0; }
+      
     .handle.start { left: 0; }
     .handle.end { right: 0; }
 
@@ -241,7 +268,7 @@
 
     /* --- MANUAL SECTION --- */
     .manual-section {
-      margin-top: 50px;
+      margin-top: 20px;
       padding: 30px;
       background: rgba(255, 255, 255, 0.5);
       border-radius: 16px;
@@ -266,56 +293,32 @@
     .manual-text { font-size: 0.9em; color: #718096; line-height: 1.4; }
 
     /* --- MOBILE ADJUSTMENTS --- */
+    @media (max-width: 850px) {
+        .editor-grid {
+            grid-template-columns: 1fr; /* Stack sidebar on top */
+            gap: 20px;
+        }
+
+        .tools-sidebar {
+            position: relative; /* Unstick on mobile */
+            top: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 2 columns for tools on mobile */
+        }
+
+        .tool-block { border-bottom: none; border-right: 1px solid #e2e8f0; padding-right: 15px; }
+        .tool-block:last-child { border-right: none; }
+    }
+
     @media (max-width: 600px) {
         body { padding: 10px; }
+        .loader-container { flex-direction: column; align-items: stretch; }
+        .tools-sidebar { grid-template-columns: 1fr; } /* 1 column stack on small mobile */
+        .tool-block { border-right: none; border-bottom: 1px solid #e2e8f0; padding-right: 0; }
         
-        .loader-container { flex-direction: column; align-items: flex-start; }
-        .status-bar { text-align: left; margin-top: 5px; }
-
-        .control-group { 
-            justify-content: space-between; 
-            padding: 15px; 
-            gap: 10px; 
-        }
-
-        .size-inputs {
-            flex-direction: row;
-            width: 100%;
-            justify-content: space-between;
-            margin-right: 0;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 10px;
-        }
-
-        .separator { display: none; } /* Hide vertical separators */
-        .spacer { display: none; }    /* Remove spacer to pack buttons */
-
-        /* Make buttons take up 48% width (2 per row) */
-        button { 
-            flex: 1 1 40%; 
-            font-size: 0.9rem;
-        }
-        
-        #speedSelect {
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        
-        /* Specific full width for important buttons */
-        #addKeepBtn, #exportBtn {
-            flex: 1 1 100%;
-            padding: 12px;
-        }
-
-        /* Timeline Taller for Touch */
         .timeline { height: 50px; }
         .handle { width: 25px; border-radius: 6px; }
         #playhead { height: 60px; top: -5px; }
-        
-        /* Manual Section */
-        .manual-section { padding: 15px; }
-        .manual-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -329,89 +332,107 @@
 
 <a href="index.html" class="back-link">← Back to Home</a>
 
-<div class="loader-container">
-    <div style="width: 100%;">
-        <label style="display:block; font-size:0.75em; font-weight:700; color:#a0aec0; margin-bottom:4px;">UPLOAD FILE</label>
-        <input type="file" id="fileInput" accept=".cast" style="width: 100%;">
-    </div>
-    <div id="statusMsg" class="status-bar">Waiting for file...</div>
-</div>
-
-<div id="playerContainer">
-    <div id="previewOverlay">PREVIEW MODE</div>
-    <div id="player"></div>
-</div>
-
-<div class="timeline-panel" id="timelinePanel">
-  <div class="timeline-ruler" id="timelineRuler"></div>
-  <div class="timeline" id="timeline">
-    <div class="handle start"></div>
-    <div class="handle end"></div>
-    <div id="playhead"></div>
-  </div>
-</div>
-
-<div class="control-group">
-  <div class="size-inputs">
-    <div><label>Width</label> <input type="number" id="screenWidth" value="80"></div>
-    <div><label>Height</label> <input type="number" id="screenHeight" value="24"></div>
-  </div>
-  
-  <button id="applySizeBtn">Resize</button>
-  <div class="separator"></div>
-
-  <select id="speedSelect">
-    <option value="0.5">Speed: 0.5x</option>
-    <option value="1" selected>Speed: 1.0×</option>
-    <option value="1.5">Speed: 1.5×</option>
-    <option value="2">Speed: 2.0×</option>
-    <option value="3">Speed: 3.0x</option>
-  </select>
-
-  <div class="separator"></div>
-
-  <button id="addKeepBtn" class="highlight-btn">✨CUT (Keep)</button>
-  
-  <button id="undoBtn">Undo</button>
-  <button id="redoBtn">Redo</button>
-  
-  <div class="spacer"></div>
-  
-  <button id="previewBtn">Preview</button>
-  <button id="editBtn" style="display:none;">Stop</button>
-  <button id="exportBtn" class="primary">Export .cast</button>
-</div>
-
-<div class="manual-section">
-    <h3 style="margin-top:0; color:#4a5568;">📖 How to Use</h3>
-    <div class="manual-grid">
-        <div class="manual-card">
-            <span class="manual-icon">📂</span>
-            <span class="manual-title">1. Upload</span>
-            <span class="manual-text">Select your <b>.cast</b> file. The video player will load automatically.</span>
+<div class="editor-grid">
+    
+    <aside class="tools-sidebar">
+        
+        <div class="tool-block">
+            <span class="tool-label">1. Size</span>
+            <div class="size-inputs">
+                <div><label>Width</label> <input type="number" id="screenWidth" value="80"></div>
+                <div><label>Height</label> <input type="number" id="screenHeight" value="24"></div>
+            </div>
+            <button id="applySizeBtn">Resize</button>
         </div>
-        <div class="manual-card">
-            <span class="manual-icon">✂️</span>
-            <span class="manual-title">2. Select & Keep</span>
-            <span class="manual-text">Drag the blue handles to select a part you want to <b>KEEP</b>. Click <b>✨CUT</b> to save that selection.</span>
+
+        <div class="tool-block">
+            <span class="tool-label">2. Speed</span>
+            <input type="number" id="speedInput" list="speedSuggestions" value="1" step="0.1" min="0.1" placeholder="e.g. 1.0">
+            <datalist id="speedSuggestions">
+                <option value="0.5">
+                <option value="1.0">
+                <option value="1.5">
+                <option value="2.0">
+                <option value="2.5">
+            </datalist>
+            <span style="font-size:0.7em; color:#a0aec0; margin-top:5px;">Type a value or select from list</span>
         </div>
-        <div class="manual-card">
-            <span class="manual-icon">🎨</span>
-            <span class="manual-title">3. Customize</span>
-            <span class="manual-text">Adjust the Width/Height or change the Speed of the video using the dropdown.</span>
+
+        <div class="tool-block">
+            <span class="tool-label">3. Actions</span>
+            <button id="addKeepBtn" class="highlight-btn">✨CUT (Keep)</button>
+            <div class="btn-group">
+                <button id="undoBtn">Undo</button>
+                <button id="redoBtn">Redo</button>
+            </div>
         </div>
-        <div class="manual-card">
-            <span class="manual-icon">💾</span>
-            <span class="manual-title">4. Export</span>
-            <span class="manual-text">Click <b>Preview</b> to check your edits. If satisfied, click <b>Export .cast</b>.</span>
+
+        <div class="tool-block">
+            <span class="tool-label">4. Export</span>
+            <button id="previewBtn">Preview</button>
+            <button id="editBtn" style="display:none;">Stop Preview</button>
+            <button id="exportBtn" class="primary" style="margin-top:5px;">Download .cast</button>
         </div>
-    </div>
+
+    </aside>
+
+    <main class="content-area">
+        
+        <div class="loader-container">
+            <div style="flex-grow: 1;">
+                <label style="display:block; font-size:0.75em; font-weight:700; color:#a0aec0; margin-bottom:4px;">UPLOAD FILE</label>
+                <input type="file" id="fileInput" accept=".cast" style="width: 100%;">
+            </div>
+            <div id="statusMsg" class="status-bar">Waiting for file...</div>
+        </div>
+
+        <div id="playerContainer">
+            <div id="previewOverlay">PREVIEW MODE</div>
+            <div id="player"></div>
+        </div>
+
+        <div class="timeline-panel" id="timelinePanel">
+            <div class="timeline-ruler" id="timelineRuler"></div>
+            <div class="timeline" id="timeline">
+            <div class="handle start"></div>
+            <div class="handle end"></div>
+            <div id="playhead"></div>
+            </div>
+        </div>
+
+        <div class="manual-section">
+            <h3 style="margin-top:0; color:#4a5568;">📖 How to Use</h3>
+            <div class="manual-grid">
+                <div class="manual-card">
+                    <span class="manual-icon">📂</span>
+                    <span class="manual-title">1. Upload</span>
+                    <span class="manual-text">Select your <b>.cast</b> file. The video player will load automatically.</span>
+                </div>
+                <div class="manual-card">
+                    <span class="manual-icon">✂️</span>
+                    <span class="manual-title">2. Select & Keep</span>
+                    <span class="manual-text">Drag the blue handles to select a part you want to <b>KEEP</b>. Click <b>✨CUT</b> to save that selection.</span>
+                </div>
+                <div class="manual-card">
+                    <span class="manual-icon">🎨</span>
+                    <span class="manual-title">3. Customize</span>
+                    <span class="manual-text">Adjust the Width/Height or type a custom <b>Speed</b> (e.g., 2.5).</span>
+                </div>
+                <div class="manual-card">
+                    <span class="manual-icon">💾</span>
+                    <span class="manual-title">4. Export</span>
+                    <span class="manual-text">Click <b>Preview</b> to check your edits. If satisfied, click <b>Export .cast</b>.</span>
+                </div>
+            </div>
+        </div>
+
+    </main>
 </div>
 
 <script src="https://unpkg.com/asciinema-player@3.7.1/dist/bundle/asciinema-player.min.js"></script>
 
 <script>
-console.log("EDITOR LOADED - RESPONSIVE");
+console.log("EDITOR LOADED - SPLIT LAYOUT + CUSTOM SPEED");
 
 const fileInput = document.getElementById("fileInput");
 const playerBox = document.getElementById("player");
@@ -432,7 +453,8 @@ const previewBtn  = document.getElementById("previewBtn");
 const editBtn     = document.getElementById("editBtn");
 const exportBtn   = document.getElementById("exportBtn");
 
-const speedSelect = document.getElementById("speedSelect");
+// UPDATED: Use speedInput instead of speedSelect
+const speedInput = document.getElementById("speedInput"); 
 const applySizeBtn = document.getElementById("applySizeBtn");
 const screenWidthInput  = document.getElementById("screenWidth");
 const screenHeightInput = document.getElementById("screenHeight");
@@ -467,7 +489,7 @@ fileInput.addEventListener("change", () => {
         
         statusMsg.textContent = "Loaded! Mark sections to keep.";
     } catch(e) {
-        alert("Failed to parse .cast file");
+        alert("You want to upload .cast file");
         console.error(e);
     }
   };
@@ -507,7 +529,7 @@ function loadPlayer(isTrimmed) {
 
   player = AsciinemaPlayer.create(url, playerBox, {
     controls: true,
-    fit: 'width' /* Changed fit to width for mobile */
+    fit: 'width'
   });
 
   if (!isTrimmed) {
@@ -554,7 +576,8 @@ function getStitchedStdout(applySpeed) {
     });
 
     if (applySpeed) {
-        const speed = parseFloat(speedSelect.value) || 1;
+        // UPDATED: Read from Input instead of Select
+        const speed = parseFloat(speedInput.value) || 1;
         if (speed !== 1) {
             final = final.map(e => [e[0] / speed, e[1], e[2]]);
         }
@@ -568,11 +591,9 @@ function initTimeline() {
   resetHandles();
   drawSelections();
   
-  // Re-draw on resize to keep handles correct relative to width
   window.addEventListener('resize', () => {
       drawTimeline();
       drawSelections();
-      // Reset handles to 0/100% just to be safe on drastic resize, or calculate %
   });
 }
 
@@ -584,7 +605,7 @@ function drawTimeline() {
     const tick = document.createElement("div");
     tick.className = "timeline-tick";
     tick.style.left = (t / duration) * w + "px";
-    if (w > 400 || t % (step*2) === 0) { // Hide some labels on small screens
+    if (w > 400 || t % (step*2) === 0) { 
         tick.textContent = formatTime(t);
     }
     ruler.appendChild(tick);
@@ -603,9 +624,9 @@ function resetHandles() {
   endHandle.style.left = (w - (window.innerWidth < 600 ? 25 : 14)) + "px"; 
 }
 
-/* Touch Support for Handles */
+/* Touch Support */
 function handleMoveStart(e) {
-    activeHandle = e.target.closest('.handle'); // Ensure we get the handle even if clicking hit-box
+    activeHandle = e.target.closest('.handle'); 
     if(activeHandle) {
         e.preventDefault(); 
         e.stopPropagation();
@@ -793,3 +814,5 @@ applySizeBtn.onclick = () => {
 </script>
 </body>
 </html>
+
+
