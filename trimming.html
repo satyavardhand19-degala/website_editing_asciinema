@@ -9,6 +9,10 @@
    
   <style>
     /* --- ANIME SKY THEME --- */
+    html {
+        scroll-behavior: smooth; /* Smooth scrolling for the anchor link */
+    }
+
     body {
       background: linear-gradient(180deg, #d4fcff 0%, #ffffff 100%);
       background-attachment: fixed;
@@ -19,6 +23,7 @@
       margin: 0 auto;
       min-height: 100vh;
       overflow-x: hidden;
+      position: relative; /* Needed for absolute positioning of top-right link */
     }
 
     body::before {
@@ -58,6 +63,29 @@
       transition: color 0.2s;
     }
     .back-link:hover { color: #3182ce; }
+
+    /* --- TOP RIGHT HELP LINK --- */
+    .help-link {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        color: #3182ce;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: 0.9em;
+        padding: 8px 15px;
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(5px);
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.8);
+        transition: all 0.2s;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .help-link:hover {
+        background: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
 
     /* --- LAYOUT GRID --- */
     .editor-grid {
@@ -273,6 +301,7 @@
       background: rgba(255, 255, 255, 0.5);
       border-radius: 16px;
       border: 1px solid rgba(255,255,255,0.6);
+      scroll-margin-top: 20px; /* Offset for smooth scroll landing */
     }
     .manual-grid {
       display: grid;
@@ -312,6 +341,7 @@
 
     @media (max-width: 600px) {
         body { padding: 10px; }
+        .help-link { top: 10px; right: 10px; font-size: 0.8em; } /* Adjust link on small screens */
         .loader-container { flex-direction: column; align-items: stretch; }
         .tools-sidebar { grid-template-columns: 1fr; }
         .tool-block { border-right: none; border-bottom: 1px solid #e2e8f0; padding-right: 0; }
@@ -324,6 +354,8 @@
 </head>
 
 <body>
+
+<a href="#howto" class="help-link">How to Use?</a>
 
 <h2>Asciinema Editor</h2>
 <p class="subtitle">
@@ -401,7 +433,7 @@
             </div>
         </div>
 
-        <div class="manual-section">
+        <div class="manual-section" id="howto">
             <h3 style="margin-top:0; color:#4a5568;">📖 How to Use</h3>
             <div class="manual-grid">
                 <div class="manual-card">
@@ -433,7 +465,7 @@
 <script src="https://unpkg.com/asciinema-player@3.7.1/dist/bundle/asciinema-player.min.js"></script>
 
 <script>
-console.log("EDITOR LOADED - SPLIT LAYOUT + WORKING SPEED + RESIZE");
+console.log("EDITOR LOADED - SPLIT LAYOUT + WORKING SPEED + LINK");
 
 const fileInput = document.getElementById("fileInput");
 const playerBox = document.getElementById("player");
@@ -510,11 +542,9 @@ function loadPlayer(isTrimmed) {
   
   // DETERMINE SPEED
   const requestedSpeed = parseFloat(speedInput.value) || 1;
-  let playbackRate = 1; // Default for player
+  let playbackRate = 1; 
 
   if (isTrimmed) {
-     // PREVIEW MODE: Timestamps are mathematically shortened (baked in)
-     // Player plays normally (1x) because data is already fast.
      dataToPlay = getStitchedStdout(true); 
      if (dataToPlay.length === 0) {
          alert("No sections marked! Please mark at least one section to keep.");
@@ -522,8 +552,6 @@ function loadPlayer(isTrimmed) {
          return;
      }
   } else {
-     // EDIT MODE: Timestamps are original.
-     // We set player playbackRate to simulate the speed visually.
      playbackRate = requestedSpeed;
   }
 
@@ -539,7 +567,6 @@ function loadPlayer(isTrimmed) {
   const blob = new Blob([text], { type: "application/json" });
   const url = URL.createObjectURL(blob);
 
-  // Pass 'speed' to options so it works in Edit Mode too
   player = AsciinemaPlayer.create(url, playerBox, {
     controls: true,
     fit: 'width',
@@ -826,10 +853,8 @@ applySizeBtn.onclick = () => {
    statusMsg.textContent = `Size applied: ${screenWidthInput.value}x${screenHeightInput.value}`;
 };
 
-// FIXED: Now works exactly like Resize
 applySpeedBtn.onclick = () => {
    if (!castData) return;
-   // Always reload player regardless of mode
    loadPlayer(isPreviewMode);
    statusMsg.textContent = `Speed applied: ${speedInput.value}x`;
 };
