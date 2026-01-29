@@ -15,7 +15,7 @@
       color: #4a5568;
       font-family: 'Nunito', 'Segoe UI', sans-serif;
       padding: 20px;
-      max-width: 1200px; /* Increased max-width for side-by-side layout */
+      max-width: 1200px;
       margin: 0 auto;
       min-height: 100vh;
       overflow-x: hidden;
@@ -62,7 +62,7 @@
     /* --- LAYOUT GRID --- */
     .editor-grid {
         display: grid;
-        grid-template-columns: 280px 1fr; /* Left Sidebar | Right Content */
+        grid-template-columns: 280px 1fr;
         gap: 25px;
         align-items: start;
     }
@@ -79,7 +79,7 @@
       flex-direction: column;
       gap: 15px;
       position: sticky;
-      top: 20px; /* Sticks when scrolling */
+      top: 20px;
     }
 
     .tool-block {
@@ -104,7 +104,7 @@
         display: flex;
         flex-direction: column;
         gap: 20px;
-        min-width: 0; /* Prevents flex items from overflowing grid */
+        min-width: 0;
     }
 
     /* --- GLASSMORPHISM PANELS --- */
@@ -147,7 +147,7 @@
       font-family: inherit;
       outline: none;
       transition: border-color 0.2s;
-      width: 100%; /* Full width for sidebar */
+      width: 100%;
       box-sizing: border-box;
     }
     input:focus, select:focus { border-color: #63b3ed; }
@@ -162,7 +162,7 @@
       transition: all 0.2s;
       font-weight: 700;
       box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-      width: 100%; /* Buttons take full width in sidebar */
+      width: 100%;
     }
 
     button:hover:not(:disabled) { 
@@ -295,15 +295,15 @@
     /* --- MOBILE ADJUSTMENTS --- */
     @media (max-width: 850px) {
         .editor-grid {
-            grid-template-columns: 1fr; /* Stack sidebar on top */
+            grid-template-columns: 1fr;
             gap: 20px;
         }
 
         .tools-sidebar {
-            position: relative; /* Unstick on mobile */
+            position: relative;
             top: 0;
             display: grid;
-            grid-template-columns: 1fr 1fr; /* 2 columns for tools on mobile */
+            grid-template-columns: 1fr 1fr;
         }
 
         .tool-block { border-bottom: none; border-right: 1px solid #e2e8f0; padding-right: 15px; }
@@ -313,7 +313,7 @@
     @media (max-width: 600px) {
         body { padding: 10px; }
         .loader-container { flex-direction: column; align-items: stretch; }
-        .tools-sidebar { grid-template-columns: 1fr; } /* 1 column stack on small mobile */
+        .tools-sidebar { grid-template-columns: 1fr; }
         .tool-block { border-right: none; border-bottom: 1px solid #e2e8f0; padding-right: 0; }
         
         .timeline { height: 50px; }
@@ -355,6 +355,7 @@
                 <option value="2.0">
                 <option value="2.5">
             </datalist>
+            <button id="applySpeedBtn" style="margin-top: 5px;">Apply Speed</button>
             <span style="font-size:0.7em; color:#a0aec0; margin-top:5px;">Type a value or select from list</span>
         </div>
 
@@ -432,7 +433,7 @@
 <script src="https://unpkg.com/asciinema-player@3.7.1/dist/bundle/asciinema-player.min.js"></script>
 
 <script>
-console.log("EDITOR LOADED - SPLIT LAYOUT + CUSTOM SPEED");
+console.log("EDITOR LOADED - SPLIT LAYOUT + WORKING SPEED + RESIZE");
 
 const fileInput = document.getElementById("fileInput");
 const playerBox = document.getElementById("player");
@@ -453,8 +454,9 @@ const previewBtn  = document.getElementById("previewBtn");
 const editBtn     = document.getElementById("editBtn");
 const exportBtn   = document.getElementById("exportBtn");
 
-// UPDATED: Use speedInput instead of speedSelect
+// Tools
 const speedInput = document.getElementById("speedInput"); 
+const applySpeedBtn = document.getElementById("applySpeedBtn"); 
 const applySizeBtn = document.getElementById("applySizeBtn");
 const screenWidthInput  = document.getElementById("screenWidth");
 const screenHeightInput = document.getElementById("screenHeight");
@@ -505,14 +507,24 @@ function loadPlayer(isTrimmed) {
   let dataToPlay = castData.stdout;
   let width = parseInt(screenWidthInput.value, 10);
   let height = parseInt(screenHeightInput.value, 10);
+  
+  // DETERMINE SPEED
+  const requestedSpeed = parseFloat(speedInput.value) || 1;
+  let playbackRate = 1; // Default for player
 
   if (isTrimmed) {
-     dataToPlay = getStitchedStdout(false); 
+     // PREVIEW MODE: Timestamps are mathematically shortened (baked in)
+     // Player plays normally (1x) because data is already fast.
+     dataToPlay = getStitchedStdout(true); 
      if (dataToPlay.length === 0) {
          alert("No sections marked! Please mark at least one section to keep.");
          editBtn.click(); 
          return;
      }
+  } else {
+     // EDIT MODE: Timestamps are original.
+     // We set player playbackRate to simulate the speed visually.
+     playbackRate = requestedSpeed;
   }
 
   let text = JSON.stringify({
@@ -527,9 +539,11 @@ function loadPlayer(isTrimmed) {
   const blob = new Blob([text], { type: "application/json" });
   const url = URL.createObjectURL(blob);
 
+  // Pass 'speed' to options so it works in Edit Mode too
   player = AsciinemaPlayer.create(url, playerBox, {
     controls: true,
-    fit: 'width'
+    fit: 'width',
+    speed: playbackRate 
   });
 
   if (!isTrimmed) {
@@ -576,7 +590,6 @@ function getStitchedStdout(applySpeed) {
     });
 
     if (applySpeed) {
-        // UPDATED: Read from Input instead of Select
         const speed = parseFloat(speedInput.value) || 1;
         if (speed !== 1) {
             final = final.map(e => [e[0] / speed, e[1], e[2]]);
@@ -810,10 +823,17 @@ redoBtn.onclick = () => {
 applySizeBtn.onclick = () => {
    if (!castData) return;
    loadPlayer(isPreviewMode);
+   statusMsg.textContent = `Size applied: ${screenWidthInput.value}x${screenHeightInput.value}`;
 };
+
+// FIXED: Now works exactly like Resize
+applySpeedBtn.onclick = () => {
+   if (!castData) return;
+   // Always reload player regardless of mode
+   loadPlayer(isPreviewMode);
+   statusMsg.textContent = `Speed applied: ${speedInput.value}x`;
+};
+
 </script>
 </body>
 </html>
-
-
-
