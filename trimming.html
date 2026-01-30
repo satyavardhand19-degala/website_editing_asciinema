@@ -459,7 +459,7 @@
                 <div class="manual-card">
                     <span class="manual-icon">✂️</span>
                     <span class="manual-title">3. Select & Keep</span>
-                    <span class="manual-text">Drag blue handles. Click <b>✨CUT</b> to save that part. <br><b>Green Blocks</b> = Saved.</span>
+                    <span class="manual-text">Drag blue handles. Click <b>✨CUT</b> to save that part. <br><b>No Cut = Save All</b></span>
                 </div>
 
                 <div class="manual-card">
@@ -482,7 +482,7 @@
 <script src="https://unpkg.com/asciinema-player@3.7.1/dist/bundle/asciinema-player.min.js"></script>
 
 <script>
-console.log("EDITOR LOADED - SPLIT LAYOUT + WORKING SPEED + MASKING");
+console.log("EDITOR LOADED - FIXED NO SELECTION EXPORT ISSUE");
 
 const fileInput = document.getElementById("fileInput");
 const playerBox = document.getElementById("player");
@@ -543,9 +543,9 @@ fileInput.addEventListener("change", () => {
         loadPlayer(false);
         setTimeout(initTimeline, 100);
         
-        statusMsg.textContent = "Loaded! Mark sections to keep.";
+        statusMsg.textContent = "Loaded! Mark sections OR Export all.";
     } catch(e) {
-        alert("You want to upload .cast file");
+        alert("Please upload a valid .cast file");
         console.error(e);
     }
   };
@@ -566,12 +566,8 @@ function loadPlayer(isTrimmed) {
   let playbackRate = 1; 
 
   if (isTrimmed) {
+     // Here we get logic: if no selection, returns full video
      dataToPlay = getStitchedStdout(true); 
-     if (dataToPlay.length === 0) {
-         alert("No sections marked! Please mark at least one section to keep.");
-         editBtn.click(); 
-         return;
-     }
   } else {
      playbackRate = requestedSpeed;
   }
@@ -606,12 +602,17 @@ function loadPlayer(isTrimmed) {
 
 /* ================= DATA PROCESSING ================= */
 function getStitchedStdout(applySpeed) {
-    if (!castData || !selections.length) return [];
+    if (!castData) return [];
 
     let source = castData.stdout;
     let final = [];
     
-    let sorted = [...selections].sort((a, b) => a.start - b.start);
+    // FIX: If no selections made, assume user wants the WHOLE video
+    let processingSelections = selections.length > 0 
+        ? selections 
+        : [{ start: 0, end: duration }];
+    
+    let sorted = [...processingSelections].sort((a, b) => a.start - b.start);
     let merged = [];
     
     if (sorted.length > 0) {
@@ -822,10 +823,8 @@ function drawSelections() {
 
 previewBtn.onclick = () => {
     if(!castData) return;
-    if(selections.length === 0) {
-        alert("Nothing marked to keep!");
-        return;
-    }
+    // REMOVED ALERT: Allow previewing even if nothing is selected (shows full video)
+    
     isPreviewMode = true;
     timelinePanel.classList.add("disabled");
     previewOverlay.style.display = "block";
@@ -852,9 +851,15 @@ editBtn.onclick = () => {
 };
 
 exportBtn.onclick = () => {
-  if (!castData || !selections.length) return;
+  if (!castData) return;
+  // REMOVED ALERT: Allow export even if no manual selections
+  
   const finalStdout = getStitchedStdout(true);
-  if (!finalStdout.length) return;
+  
+  if (!finalStdout.length) {
+      alert("Error generating output. File might be empty.");
+      return;
+  }
 
   const width = parseInt(screenWidthInput.value, 10);
   const height = parseInt(screenHeightInput.value, 10);
@@ -871,7 +876,7 @@ exportBtn.onclick = () => {
   const blob = new Blob([text], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "Trimming.cast";
+  a.download = "Edited.cast";
   a.click();
   
   statusMsg.textContent = "Exported!";
