@@ -6,12 +6,10 @@
   <title>Asciinema Editor</title>
   <link rel="stylesheet" href="https://unpkg.com/asciinema-player@3.7.1/dist/bundle/asciinema-player.css">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-   
+    
   <style>
     /* --- ANIME SKY THEME --- */
-    html {
-        scroll-behavior: smooth; /* Smooth scrolling for the anchor link */
-    }
+    html { scroll-behavior: smooth; }
 
     body {
       background: linear-gradient(180deg, #d4fcff 0%, #ffffff 100%);
@@ -23,7 +21,7 @@
       margin: 0 auto;
       min-height: 100vh;
       overflow-x: hidden;
-      position: relative; /* Needed for absolute positioning of top-right link */
+      position: relative;
     }
 
     body::before {
@@ -118,7 +116,7 @@
         gap: 10px;
     }
     .tool-block:last-child { border-bottom: none; padding-bottom: 0; }
-    
+     
     .tool-label {
         font-size: 0.75em; 
         font-weight: 800; 
@@ -166,7 +164,7 @@
     }
 
     /* --- INPUTS & BUTTONS --- */
-    input[type="number"], select, input[type="file"] {
+    input[type="number"], select, input[type="file"], input[type="text"] {
       background: #ffffff;
       border: 2px solid #e2e8f0;
       color: #4a5568;
@@ -301,7 +299,7 @@
       background: rgba(255, 255, 255, 0.5);
       border-radius: 16px;
       border: 1px solid rgba(255,255,255,0.6);
-      scroll-margin-top: 20px; /* Offset for smooth scroll landing */
+      scroll-margin-top: 20px;
     }
     .manual-grid {
       display: grid;
@@ -341,7 +339,7 @@
 
     @media (max-width: 600px) {
         body { padding: 10px; }
-        .help-link { top: 10px; right: 10px; font-size: 0.8em; } /* Adjust link on small screens */
+        .help-link { top: 10px; right: 10px; font-size: 0.8em; } 
         .loader-container { flex-direction: column; align-items: stretch; }
         .tools-sidebar { grid-template-columns: 1fr; }
         .tool-block { border-right: none; border-bottom: 1px solid #e2e8f0; padding-right: 0; }
@@ -355,7 +353,7 @@
 
 <body>
 
-<a href="#howto" class="help-link">How to Use?</a>
+<a href="#howto" class="help-link">How to Use? ⇩</a>
 
 <h2>Asciinema Editor</h2>
 <p class="subtitle">
@@ -388,7 +386,6 @@
                 <option value="2.5">
             </datalist>
             <button id="applySpeedBtn" style="margin-top: 5px;">Apply Speed</button>
-            <span style="font-size:0.7em; color:#a0aec0; margin-top:5px;">Type a value or select from list</span>
         </div>
 
         <div class="tool-block">
@@ -399,9 +396,20 @@
                 <button id="redoBtn">Redo</button>
             </div>
         </div>
-
+        
+        <div class="tool-block" style="border-top:1px solid #e2e8f0; padding-top:15px; margin-top:5px;">
+             <span class="tool-label">4. Masking</span>
+             <label style="font-size:0.8em; color:#718096; margin-bottom:2px;">Find text (e.g. username)</label>
+             <input type="text" id="findText" placeholder="old_name">
+             
+             <label style="font-size:0.8em; color:#718096; margin-bottom:2px; margin-top:5px;">Replace with</label>
+             <input type="text" id="replaceText" placeholder="new_name">
+             
+             <button id="applyReplaceBtn" style="margin-top:10px; background:#ecc94b; border-color:#ecc94b; color:#fff;">Replace All</button>
+        </div>
+        
         <div class="tool-block">
-            <span class="tool-label">4. Export</span>
+            <span class="tool-label">5. Export</span>
             <button id="previewBtn">Preview</button>
             <button id="editBtn" style="display:none;">Stop Preview</button>
             <button id="exportBtn" class="primary" style="margin-top:5px;">Download .cast</button>
@@ -441,20 +449,29 @@
                     <span class="manual-title">1. Upload</span>
                     <span class="manual-text">Select your <b>.cast</b> file. The video player will load automatically.</span>
                 </div>
+                
+                <div class="manual-card">
+                    <span class="manual-icon">⚙️</span>
+                    <span class="manual-title">2. Resize & Speed</span>
+                    <span class="manual-text">Set <b>Width/Height</b> to crop. Set <b>Speed</b> (e.g. 2.0) to fast-forward.</span>
+                </div>
+
                 <div class="manual-card">
                     <span class="manual-icon">✂️</span>
-                    <span class="manual-title">2. Select & Keep</span>
-                    <span class="manual-text">Drag the blue handles to select a part you want to <b>KEEP</b>. Click <b>✨CUT</b> to save that selection.</span>
+                    <span class="manual-title">3. Select & Keep</span>
+                    <span class="manual-text">Drag blue handles. Click <b>✨CUT</b> to save that part. <br><b>Green Blocks</b> = Saved.</span>
                 </div>
+
                 <div class="manual-card">
-                    <span class="manual-icon">🎨</span>
-                    <span class="manual-title">3. Customize</span>
-                    <span class="manual-text">Adjust the Width/Height or type a custom <b>Speed</b> (e.g., 2.5).</span>
+                    <span class="manual-icon">🎭</span>
+                    <span class="manual-title">4. Mask Text</span>
+                    <span class="manual-text">Find "secret" & Replace with "***". Click <b>Replace All</b> to hide secrets.</span>
                 </div>
+
                 <div class="manual-card">
                     <span class="manual-icon">💾</span>
-                    <span class="manual-title">4. Export</span>
-                    <span class="manual-text">Click <b>Preview</b> to check your edits. If satisfied, click <b>Export .cast</b>.</span>
+                    <span class="manual-title">5. Export</span>
+                    <span class="manual-text">Click <b>Preview</b> to check. If satisfied, click <b>Download .cast</b>.</span>
                 </div>
             </div>
         </div>
@@ -465,7 +482,7 @@
 <script src="https://unpkg.com/asciinema-player@3.7.1/dist/bundle/asciinema-player.min.js"></script>
 
 <script>
-console.log("EDITOR LOADED - SPLIT LAYOUT + WORKING SPEED + LINK");
+console.log("EDITOR LOADED - SPLIT LAYOUT + WORKING SPEED + MASKING");
 
 const fileInput = document.getElementById("fileInput");
 const playerBox = document.getElementById("player");
@@ -492,6 +509,11 @@ const applySpeedBtn = document.getElementById("applySpeedBtn");
 const applySizeBtn = document.getElementById("applySizeBtn");
 const screenWidthInput  = document.getElementById("screenWidth");
 const screenHeightInput = document.getElementById("screenHeight");
+
+// Masking Tools
+const findTextInput = document.getElementById("findText");
+const replaceTextInput = document.getElementById("replaceText");
+const applyReplaceBtn = document.getElementById("applyReplaceBtn");
 
 let castData = null; 
 let duration = 0;    
@@ -540,7 +562,6 @@ function loadPlayer(isTrimmed) {
   let width = parseInt(screenWidthInput.value, 10);
   let height = parseInt(screenHeightInput.value, 10);
   
-  // DETERMINE SPEED
   const requestedSpeed = parseFloat(speedInput.value) || 1;
   let playbackRate = 1; 
 
@@ -624,6 +645,44 @@ function getStitchedStdout(applySpeed) {
     }
     return final;
 }
+
+/* ================= TEXT REPLACEMENT LOGIC ================= */
+applyReplaceBtn.onclick = () => {
+    if (!castData) return;
+    
+    const findStr = findTextInput.value;
+    const replaceStr = replaceTextInput.value;
+
+    if (!findStr) {
+        alert("Please enter text to find.");
+        return;
+    }
+
+    // Save state for Undo
+    undoStack.push(snapshotState());
+    redoStack.length = 0;
+
+    let count = 0;
+    // Iterate and replace in memory
+    castData.stdout = castData.stdout.map(event => {
+        // event is [time, type, data]
+        if (event[2].includes(findStr)) {
+            // Replace all occurrences in this chunk
+            const newData = event[2].split(findStr).join(replaceStr);
+            count++;
+            return [event[0], event[1], newData];
+        }
+        return event;
+    });
+
+    if (count > 0) {
+        statusMsg.textContent = `Replaced ${count} occurrences.`;
+        loadPlayer(isPreviewMode); // Reload to show changes
+    } else {
+        statusMsg.textContent = "Text not found.";
+    }
+};
+
 
 /* ================= TIMELINE LOGIC ================= */
 function initTimeline() {
@@ -823,6 +882,7 @@ function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 function snapshotState() {
   return {
     selections: JSON.parse(JSON.stringify(selections)),
+    stdout: castData ? JSON.parse(JSON.stringify(castData.stdout)) : [], // Save stdout state for undoing replace
     startX: startHandle.offsetLeft,
     endX: endHandle.offsetLeft,
   };
@@ -830,9 +890,11 @@ function snapshotState() {
 
 function restoreState(state) {
   selections = JSON.parse(JSON.stringify(state.selections));
+  if(castData && state.stdout) castData.stdout = JSON.parse(JSON.stringify(state.stdout));
   startHandle.style.left = state.startX + "px";
   endHandle.style.left = state.endX + "px";
   drawSelections();
+  loadPlayer(isPreviewMode);
 }
 
 undoBtn.onclick = () => {
