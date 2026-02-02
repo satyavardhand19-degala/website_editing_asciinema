@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Asciinema Player</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@3.7.1/dist/bundle/asciinema-player.css" />
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f8fafc;
+      color: #1a1a2e;
+      display: flex;
+      flex-direction: column;
+    }
+
+    nav { padding: 25px 60px; flex-shrink: 0; }
+    .logo { font-size: 1.5rem; font-weight: 700; color: #4e54c8; }
+
+    .container {
+      flex: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      text-align: center;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 { font-size: 2.5rem; margin-bottom: 10px; }
+    p { color: #64748b; margin-bottom: 40px; }
+
+    .upload-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      border: 2px dashed #5e72e4;
+      border-radius: 20px;
+      padding: 50px 30px;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .upload-box:hover { border-color: #4e54c8; background: #fcfdff; }
+    .upload-box.dragover { background: #eef2ff; border-color: #4e54c8; transform: scale(1.02); }
+
+    .upload-box input { display: none; }
+    .upload-icon { font-size: 3rem; margin-bottom: 15px; }
+    .upload-text { font-weight: 600; margin-bottom: 8px; }
+    .upload-hint { font-size: .9rem; color: #64748b; }
+
+    /* --- PLAYER WRAPPER STYLES --- */
+    .player-wrapper {
+      width: 100%;
+      max-width: 1000px;
+      margin: 40px auto 0;
+      background: #0f172a;
+      border-radius: 8px;
+      overflow: hidden;
+      display: none;
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3);
+      position: relative;
+    }
+
+    /* While in Fullscreen, force wrapper to fill screen and center content */
+    .player-wrapper:fullscreen {
+      width: 100vw;
+      height: 100vh;
+      max-width: none;
+      margin: 0;
+      border-radius: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+    }
+
+    /* Ensure the player div takes available space */
+    #player { 
+      width: 100%; 
+      outline: none; 
+    }
+    
+    /* In fullscreen, let the player stretch */
+    .player-wrapper:fullscreen #player {
+      height: 100%;
+      width: 100%;
+    }
+
+    /* Toast Notification */
+    .status-toast {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #000;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 1rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 2147483647; /* Ensure it sits on top of fullscreen */
+    }
+
+    .shortcuts {
+      margin-top: 30px;
+      font-size: .85rem;
+      color: #64748b;
+      font-family: monospace;
+      background: #e2e8f0;
+      padding: 8px 16px;
+      border-radius: 20px;
+      display: none;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+      flex-shrink: 0;
+    }
+
+    footer { text-align: center; padding: 20px; font-size: .85rem; color: #94a3b8; flex-shrink: 0; }
+  </style>
+</head>
+
+<body>
+
+<nav>
+  <div class="logo">Asciinema Player</div>
+</nav>
+
+<main class="container">
+  <h1>Asciinema Player</h1>
+  <p>Upload a <strong>.cast</strong> file to preview your terminal recording instantly.</p>
+
+  <label class="upload-box" id="uploadBox">
+    <div class="upload-icon">📤</div>
+    <div class="upload-text">Click or Drag & Drop your .cast file</div>
+    <div class="upload-hint">Files stay in your browser. Nothing is uploaded.</div>
+    <input type="file" id="fileInput" accept=".cast">
+  </label>
+
+  <div class="player-wrapper" id="playerWrapper">
+    <div class="status-toast" id="statusToast"></div>
+    <div id="player"></div>
+  </div>
+
+  <div class="shortcuts" id="shortcuts">
+    ⌨️ Space: Play/Pause · F: Fullscreen · ↑/↓: Speed · ←/→: Seek 5s  · R: Restart
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/asciinema-player@3.7.1/dist/bundle/asciinema-player.min.js"></script>
+
+<script>
+  const fileInput = document.getElementById("fileInput");
+  const uploadBox = document.getElementById("uploadBox");
+  const playerWrapper = document.getElementById("playerWrapper");
+  const playerDiv = document.getElementById("player");
+  const shortcuts = document.getElementById("shortcuts");
+  const statusToast = document.getElementById("statusToast");
+
+  let playerInstance = null;
+  let currentObjectUrl = null;
+  
+  // State tracking
+  let isPlaying = true;
+  let playbackRate = 1.0;
+  let currentTime = 0;
+
+  function createPlayer(startAtTime = 0) {
+    if (playerInstance) playerInstance.dispose();
+
+    // Check if we are currently in fullscreen mode
+    const isFullscreen = document.fullscreenElement === playerWrapper;
+
+    // Use 'both' to fill screen if fullscreen, otherwise 'width' allows height to grow naturally
+    const fitMode = isFullscreen ? 'both' : 'width';
+
+    playerInstance = AsciinemaPlayer.create(currentObjectUrl, playerDiv, {
+      autoPlay: isPlaying,
+      theme: "dracula",
+      fit: fitMode,   // Dynamically adjust fit based on screen mode
+      preload: true,
+      speed: playbackRate,
+      startIndex: startAtTime 
+    });
+  }
+
+  function loadCast(file) {
+    if (!file.name.endsWith(".cast") && !file.name.endsWith(".json")) {
+      alert("Please upload a valid .cast file");
+      return;
+    }
+
+    if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+    currentObjectUrl = URL.createObjectURL(file);
+
+    playerWrapper.style.display = "block";
+    shortcuts.style.display = "block";
+    
+    playbackRate = 1.0;
+    currentTime = 0;
+    isPlaying = true;
+
+    createPlayer(0);
+  }
+
+  let toastTimer;
+  function showToast(message) {
+    statusToast.innerText = message;
+    statusToast.style.opacity = "1";
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      statusToast.style.opacity = "0";
+    }, 1500);
+  }
+
+  // --- Keyboard Logic ---
+  window.addEventListener('keydown', (e) => {
+    // Only act if player is loaded
+    if (!currentObjectUrl) return;
+
+    if(["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) {
+      e.preventDefault(); 
+    }
+
+    switch(e.code) {
+      case 'Space':
+        if (!playerInstance) return;
+        // Toggle play/pause logic
+        // We can check playing status roughly or just toggle our flag
+        if (isPlaying) {
+          playerInstance.pause();
+          isPlaying = false;
+          showToast("Paused");
+        } else {
+          playerInstance.play();
+          isPlaying = true;
+          showToast("Playing");
+        }
+        break;
+
+      case 'KeyR':
+        createPlayer(0);
+        showToast("Restarted");
+        break;
+
+      case 'KeyF':
+        // Toggle Fullscreen on the WRAPPER, not the button
+        if (!document.fullscreenElement) {
+          playerWrapper.requestFullscreen().catch(err => {
+            console.log(`Error attempting to enable fullscreen: ${err.message}`);
+          });
+          // We need to recreate player shortly after to trigger fit: 'both'
+          // A small delay allows the CSS transition to happen
+          setTimeout(() => { 
+              currentTime = playerInstance ? playerInstance.getCurrentTime() : 0;
+              createPlayer(currentTime); 
+          }, 100);
+        } else {
+          document.exitFullscreen();
+          setTimeout(() => { 
+              currentTime = playerInstance ? playerInstance.getCurrentTime() : 0;
+              createPlayer(currentTime); 
+          }, 100);
+        }
+        break;
+
+      case 'ArrowUp': // Increase Speed
+        playbackRate = Math.min(playbackRate + 0.25, 4.0);
+        if(playerInstance) currentTime = playerInstance.getCurrentTime();
+        createPlayer(currentTime);
+        showToast(`Speed: ${playbackRate}x`);
+        break;
+
+      case 'ArrowDown': // Decrease Speed
+        playbackRate = Math.max(playbackRate - 0.25, 0.25);
+        if(playerInstance) currentTime = playerInstance.getCurrentTime();
+        createPlayer(currentTime);
+        showToast(`Speed: ${playbackRate}x`);
+        break;
+
+      case 'ArrowRight': // Seek Forward
+        if(!playerInstance) return;
+        currentTime = playerInstance.getCurrentTime();
+        playerInstance.seek(currentTime + 5);
+        showToast(`Forward +5s`);
+        break;
+
+      case 'ArrowLeft': // Seek Backward
+        if(!playerInstance) return;
+        currentTime = playerInstance.getCurrentTime();
+        playerInstance.seek(Math.max(0, currentTime - 5));
+        showToast(`Rewind -5s`);
+        break;
+    }
+  });
+
+  // Handle exiting fullscreen via ESC key manually to ensure layout resets
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && playerInstance) {
+        // We just exited fullscreen, force re-render to fix 'fit' sizing
+        currentTime = playerInstance.getCurrentTime();
+        createPlayer(currentTime);
+    }
+  });
+
+  // --- Drag & Drop ---
+  fileInput.addEventListener("change", () => {
+    if (fileInput.files.length) loadCast(fileInput.files[0]);
+    fileInput.value = ''; 
+  });
+  uploadBox.addEventListener("dragover", e => {
+    e.preventDefault();
+    uploadBox.classList.add("dragover");
+  });
+  uploadBox.addEventListener("dragleave", () => {
+    uploadBox.classList.remove("dragover");
+  });
+  uploadBox.addEventListener("drop", e => {
+    e.preventDefault();
+    uploadBox.classList.remove("dragover");
+    if (e.dataTransfer.files.length) loadCast(e.dataTransfer.files[0]);
+  });
+</script>
+
+</body>
+</html>

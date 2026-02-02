@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asciinema Merger</title>
+  <style>
+    /* --- ANIME SKY THEME --- */
+    body {
+      background: linear-gradient(180deg, #d4fcff 0%, #ffffff 100%);
+      background-attachment: fixed;
+      color: #4a5568;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      padding: 20px;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh; /* Fixed height issue */
+    }
+
+    body::before {
+        content: "";
+        position: fixed;
+        top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.8) 10%, transparent 20%),
+                    radial-gradient(circle, rgba(255,255,255,0.8) 10%, transparent 20%);
+        background-position: 0 0, 100px 100px;
+        background-size: 200px 200px;
+        opacity: 0.3;
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 800px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      padding: 40px;
+      box-shadow: 0 10px 15px -3px rgba(164, 202, 254, 0.2);
+      border-radius: 12px;
+      margin-top: 20px;
+      height: fit-content;
+      box-sizing: border-box; /* Ensures padding doesn't break width */
+    }
+
+    h2 { 
+      border-bottom: 2px solid #e2e8f0; 
+      padding-bottom: 15px; 
+      margin-top: 0;
+      color: #3182ce;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    
+    .back-link {
+      color: #63b3ed;
+      text-decoration: none;
+      margin-bottom: 20px;
+      display: inline-block;
+      font-weight: 700;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: #3182ce; }
+
+    .upload-zone {
+      border: 2px dashed #cbd5e0;
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 20px;
+      background: rgba(255, 255, 255, 0.5);
+      transition: all 0.2s;
+    }
+    .upload-zone:hover {
+      border-color: #63b3ed;
+      background: #ebf8ff;
+    }
+
+    .file-list {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 30px;
+    }
+
+    .file-item {
+      background: #ffffff;
+      margin-bottom: 8px;
+      padding: 12px 15px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .file-name { font-weight: 600; color: #2d3748; word-break: break-all; margin-right: 10px; }
+    .file-info { color: #718096; font-size: 0.9em; margin-right: 15px; font-family: monospace; }
+
+    button {
+      padding: 10px 20px;
+      cursor: pointer;
+      background: #ffffff;
+      color: #4a5568;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.2s;
+      font-weight: 700;
+    }
+
+    button:hover { 
+      background: #ebf8ff; 
+      border-color: #bee3f8;
+      transform: translateY(-1px);
+    }
+    
+    .primary-btn {
+      background: #3182ce;
+      color: #fff;
+      border: 2px solid #3182ce;
+      width: 100%;
+      padding: 15px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 6px rgba(66, 153, 225, 0.2);
+    }
+    .primary-btn:hover:not(:disabled) { 
+      background: #2b6cb0; 
+      border-color: #2b6cb0;
+      box-shadow: 0 6px 8px rgba(66, 153, 225, 0.3);
+    }
+    .primary-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      background: #cbd5e0;
+      border-color: #cbd5e0;
+      box-shadow: none;
+      color: #fff;
+    }
+
+    .upload-btn {
+      background: #ffffff;
+      border: 2px solid #3182ce;
+      color: #3182ce;
+    }
+    .upload-btn:hover {
+      background: #3182ce;
+      color: #fff;
+    }
+
+    .remove-btn {
+      padding: 4px 8px; 
+      font-size: 0.8rem; 
+      background: #fff5f5; 
+      color: #e53e3e; 
+      border: 1px solid #fc8181;
+      border-radius: 6px;
+    }
+    .remove-btn:hover {
+      background: #e53e3e;
+      color: white;
+    }
+    
+    .options {
+        margin-bottom: 20px;
+        font-size: 0.9rem;
+    }
+
+    /* --- MOBILE RESPONSIVENESS --- */
+    @media (max-width: 600px) {
+        .app-container {
+            padding: 20px;
+            margin-top: 0;
+            width: 100%;
+        }
+
+        .upload-zone { padding: 20px; }
+
+        .file-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .file-item > div {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .options label {
+            align-items: flex-start;
+        }
+        
+        .options input[type="checkbox"] {
+            margin-top: 3px;
+        }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <a href="index.html" class="back-link">← Back to Home</a>
+
+  <h2>Combine Videos</h2>
+  <p style="color:#718096; margin-bottom: 25px;">
+    Upload multiple .cast files. You must upload at least 2 files to merge.
+  </p>
+
+  <div class="upload-zone">
+    <input type="file" id="filesInput" accept=".cast" multiple style="display:none">
+    <button class="upload-btn" onclick="document.getElementById('filesInput').click()">+ Add .cast Files</button>
+  </div>
+
+  <ul id="fileList" class="file-list"></ul>
+
+  <div class="options">
+      <label style="cursor:pointer; display:flex; align-items:center; gap: 10px;">
+          <input type="checkbox" id="clearScreenCheck" checked> 
+          <span>Insert "Clear Screen" between videos? (Recommended)</span>
+      </label>
+  </div>
+
+  <button id="mergeBtn" class="primary-btn" disabled>Add at least 2 files</button>
+</div>
+
+<script>
+  const filesInput = document.getElementById("filesInput");
+  const fileListEl = document.getElementById("fileList");
+  const mergeBtn = document.getElementById("mergeBtn");
+  const clearScreenCheck = document.getElementById("clearScreenCheck");
+
+  let filesData = [];
+
+  filesInput.addEventListener("change", async () => {
+    const newFiles = Array.from(filesInput.files);
+    
+    for (const f of newFiles) {
+      try {
+        const text = await f.text();
+        const lines = text.split("\n").filter(Boolean);
+        
+        if (lines.length < 2) continue; 
+
+        const header = JSON.parse(lines[0]);
+        const stdout = lines.slice(1).map(l => JSON.parse(l));
+        
+        let duration = 0;
+        if (stdout.length > 0) {
+            const lastEvent = stdout[stdout.length - 1];
+            duration = lastEvent[0];
+        }
+
+        filesData.push({
+          name: f.name,
+          header: header,
+          stdout: stdout,
+          duration: duration
+        });
+      } catch (e) {
+        console.error("Error reading file", f.name, e);
+        alert(`Failed to parse ${f.name}`);
+      }
+    }
+
+    filesInput.value = "";
+    renderList();
+  });
+
+  function renderList() {
+    fileListEl.innerHTML = "";
+    filesData.forEach((file, index) => {
+      const li = document.createElement("li");
+      li.className = "file-item";
+      li.innerHTML = `
+        <span class="file-name">${index + 1}. ${file.name}</span>
+        <div>
+          <span class="file-info">${formatTime(file.duration)}</span>
+          <button class="remove-btn" onclick="removeFile(${index})">✕</button>
+        </div>
+      `;
+      fileListEl.appendChild(li);
+    });
+
+    const fileCount = filesData.length;
+    if (fileCount < 2) {
+        mergeBtn.disabled = true;
+        mergeBtn.textContent = fileCount === 0 ? "Add at least 2 files" : "Add 1 more file to merge";
+    } else {
+        mergeBtn.disabled = false;
+        mergeBtn.textContent = `Merge ${fileCount} Files & Download`;
+    }
+  }
+
+  window.removeFile = (index) => {
+    filesData.splice(index, 1);
+    renderList();
+  };
+
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  }
+
+  mergeBtn.onclick = () => {
+    if (filesData.length < 2) return;
+
+    const masterHeader = filesData[0].header;
+    let combinedStdout = [];
+    let currentTimeOffset = 0;
+    const insertClear = clearScreenCheck.checked;
+
+    filesData.forEach((file, index) => {
+      const shiftedEvents = file.stdout.map(e => {
+        return [e[0] + currentTimeOffset, e[1], e[2]];
+      });
+
+      if (index > 0 && insertClear) {
+          combinedStdout.push([currentTimeOffset, "o", "\u001bc"]); 
+      }
+
+      combinedStdout = combinedStdout.concat(shiftedEvents);
+      currentTimeOffset += file.duration + 0.1; 
+    });
+
+    let text = JSON.stringify(masterHeader) + "\n";
+    combinedStdout.forEach(e => text += JSON.stringify(e) + "\n");
+
+    const blob = new Blob([text], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "combined_video.cast";
+    a.click();
+  };
+</script>
+
+</body>
+</html>

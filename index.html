@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asciinema Studio</title>
+  <style>
+    /* --- RESET & FONTS --- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #ffffff;
+      color: #333;
+      min-height: 100vh; /* Changed from height:100vh to min-height to allow scrolling */
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden; /* Only hide horizontal overflow */
+      position: relative;
+    }
+
+    /* --- DECORATIVE BACKGROUND BLOBS --- */
+    body::before {
+      content: '';
+      position: absolute;
+      top: -100px;
+      right: -100px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(0,255,150,0.1) 0%, rgba(255,255,255,0) 70%);
+      z-index: -1;
+    }
+    body::after {
+      content: '';
+      position: absolute;
+      bottom: -100px;
+      left: -100px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(130, 80, 255, 0.1) 0%, rgba(255,255,255,0) 70%);
+      z-index: -1;
+    }
+
+    /* --- NAVIGATION --- */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 30px 60px;
+      width: 100%;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #4e54c8;
+    }
+
+    /* --- HERO SECTION --- */
+    .hero-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 60px;
+      flex: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* --- LEFT CONTENT (TEXT) --- */
+    .left-content {
+      flex: 1;
+      padding-right: 50px;
+      max-width: 600px;
+    }
+
+    h1 {
+      font-size: 3.5rem;
+      color: #1a1a2e;
+      margin-bottom: 20px;
+      line-height: 1.2;
+    }
+    
+    h1 span {
+        color: #4e54c8;
+    }
+
+    .description {
+      font-size: 1rem;
+      color: #8898aa;
+      margin-bottom: 40px;
+      line-height: 1.6;
+      max-width: 450px;
+    }
+
+    /* --- BUTTONS --- */
+    .btn-group {
+      display: flex;
+      gap: 20px;
+    }
+
+    .btn {
+      padding: 15px 35px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center; /* Center text in button */
+      gap: 10px;
+      white-space: nowrap; /* Prevent text wrapping inside button */
+    }
+
+    .btn-primary {
+      background-color: #5e72e4;
+      color: white;
+      border: none;
+      box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+    
+    .btn-primary:hover {
+      background-color: #485fdb;
+      transform: translateY(-2px);
+      box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      color: #5e72e4;
+      border: 2px solid #5e72e4;
+    }
+
+    .btn-outline:hover {
+      background-color: rgba(94, 114, 228, 0.05);
+      transform: translateY(-2px);
+    }
+
+    /* --- RIGHT CONTENT (IMAGE) --- */
+    .right-content {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .hero-image {
+      max-width: 100%;
+      height: auto;
+      filter: drop-shadow(0 20px 40px rgba(0,0,0,0.1));
+      transform: perspective(1000px) rotateY(-5deg);
+    }
+
+    /* --- MOBILE RESPONSIVENESS (ADDED) --- */
+    @media (max-width: 992px) {
+        nav { padding: 20px 30px; }
+        .hero-container { 
+            flex-direction: column; /* Stack vertically */
+            padding: 20px 30px; 
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .left-content {
+            padding-right: 0;
+            max-width: 100%;
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .description { margin-left: auto; margin-right: auto; }
+        
+        .hero-image {
+            transform: none; /* Remove 3D effect on mobile for better fit */
+            max-width: 80%;
+        }
+    }
+
+    @media (max-width: 600px) {
+        h1 { font-size: 2.5rem; }
+        
+        .btn-group {
+            flex-direction: column; /* Stack buttons vertically */
+            width: 100%;
+        }
+        
+        .btn { width: 100%; }
+        
+        nav { justify-content: center; }
+        .hero-image { max-width: 100%; }
+    }
+
+  </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo">Asciinema Studio</div>
+</nav>
+  
+  <div class="hero-container">
+    
+    <div class="left-content">
+      <h1>Video <span>Editing</span><br>Simpler. Faster.</h1>
+      
+      <p class="description">
+        The professional toolkit for your .cast files. 
+        Trim unwanted sections or merge multiple recordings into a seamless masterpiece.
+      </p>
+      
+      <div class="btn-group">
+        <a href="trimming.html" class="btn btn-primary">
+          ✂️ Start Trimming
+        </a>
+        
+        <a href="merger.html" class="btn btn-outline">
+          🔗 Merge Videos
+        </a>
+      </div>
+    </div>
+
+    <div class="right-content">
+      <img src="heroimage.png" alt="Video Editing Illustration" class="hero-image">
+    </div>
+
+  </div>
+
+</body>
+</html>
+

@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asciinema Editor</title>
+  <link rel="stylesheet" href="https://unpkg.com/asciinema-player@3.7.1/dist/bundle/asciinema-player.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    
+  <style>
+    /* --- ANIME SKY THEME --- */
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: linear-gradient(180deg, #d4fcff 0%, #ffffff 100%);
+      background-attachment: fixed;
+      color: #4a5568;
+      font-family: 'Nunito', 'Segoe UI', sans-serif;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    body::before {
+        content: "";
+        position: fixed;
+        top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.8) 10%, transparent 20%),
+                    radial-gradient(circle, rgba(255,255,255,0.8) 10%, transparent 20%);
+        background-position: 0 0, 100px 100px;
+        background-size: 200px 200px;
+        opacity: 0.3;
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    h2 { 
+        margin-top: 0; 
+        color: #3182ce;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .subtitle {
+      color: #718096; 
+      font-size: 0.95em; 
+      margin-top: -8px; 
+      margin-bottom: 25px;
+    }
+
+    .back-link {
+      color: #63b3ed;
+      text-decoration: none;
+      margin-bottom: 20px;
+      display: inline-block;
+      font-weight: 700;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: #3182ce; }
+
+    /* --- TOP RIGHT HELP LINK --- */
+    .help-link {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        color: #3182ce;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: 0.9em;
+        padding: 8px 15px;
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(5px);
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.8);
+        transition: all 0.2s;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .help-link:hover {
+        background: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    /* --- LAYOUT GRID --- */
+    .editor-grid {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 25px;
+        align-items: start;
+    }
+
+    /* --- SIDEBAR TOOLS --- */
+    .tools-sidebar {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 10px 15px -3px rgba(164, 202, 254, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      position: sticky;
+      top: 20px;
+    }
+
+    .tool-block {
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .tool-block:last-child { border-bottom: none; padding-bottom: 0; }
+     
+    .tool-label {
+        font-size: 0.75em; 
+        font-weight: 800; 
+        color: #a0aec0; 
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* --- RIGHT CONTENT AREA --- */
+    .content-area {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        min-width: 0;
+    }
+
+    /* --- GLASSMORPHISM PANELS --- */
+    .loader-container {
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      padding: 15px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      gap: 15px;
+    }
+
+    .size-inputs {
+      display: grid; 
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .size-inputs div { display: flex; flex-direction: column; }
+    .size-inputs label { font-size: 0.8em; font-weight: 700; color: #718096; margin-bottom: 3px; }
+    .size-inputs input { width: 100%; box-sizing: border-box; }
+
+    .status-bar {
+      color: #3182ce;
+      font-size: 0.9em;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* --- INPUTS & BUTTONS --- */
+    input[type="number"], select, input[type="file"], input[type="text"] {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      color: #4a5568;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    input:focus, select:focus { border-color: #63b3ed; }
+
+    button {
+      padding: 10px 16px;
+      cursor: pointer;
+      background: #ffffff;
+      color: #4a5568;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      transition: all 0.2s;
+      font-weight: 700;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      width: 100%;
+    }
+
+    button:hover:not(:disabled) { 
+        border-color: #bee3f8; 
+        background: #ebf8ff; 
+        transform: translateY(-1px);
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    button.primary { background: #3182ce; color: #fff; border: 2px solid #3182ce; }
+    button.primary:hover { background: #2b6cb0; border-color: #2b6cb0; }
+
+    button.highlight-btn { background: #38b2ac; color: #fff; border: 2px solid #38b2ac; }
+    button.highlight-btn:hover { background: #319795; border-color: #319795; }
+
+    .btn-group {
+        display: flex;
+        gap: 8px;
+    }
+
+    /* --- PLAYER & TIMELINE --- */
+    #playerContainer {
+      position: relative;
+      border: none;
+      min-height: 200px;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    #previewOverlay {
+      position: absolute;
+      top: 15px; right: 15px;
+      background: rgba(255, 255, 255, 0.95);
+      color: #3182ce;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 800;
+      pointer-events: none;
+      display: none;
+      z-index: 100;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .timeline-panel { user-select: none; position: relative; padding: 10px 0; }
+    .timeline-panel.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(0.5); }
+
+    .timeline-ruler {
+      position: relative; height: 20px; margin-bottom: 8px;
+      font-size: 11px; color: #718096; font-weight: 600;
+    }
+
+    .timeline-tick {
+      position: absolute; transform: translateX(-50%); bottom: 0;
+    }
+    .timeline-tick::after {
+      content: ''; position: absolute; left: 50%; bottom: -5px;
+      width: 2px; height: 6px; background: #cbd5e0; border-radius: 2px;
+    }
+
+    .timeline {
+      position: relative; height: 36px; 
+      background: #edf2f7; 
+      border-radius: 8px; 
+      border: 2px solid #e2e8f0;
+      touch-action: none; 
+    }
+
+    .handle {
+      position: absolute; width: 14px; height: 100%;
+      background: #63b3ed; cursor: col-resize; z-index: 20; top: 0;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      touch-action: none;
+    }
+      
+    .handle::after { content: ''; position: absolute; left: -10px; right: -10px; top:0; bottom:0; }
+      
+    .handle.start { left: 0; }
+    .handle.end { right: 0; }
+
+    #playhead {
+      position: absolute; top: -6px; width: 3px; height: 48px;
+      background: #f687b3;
+      z-index: 30; pointer-events: none; border-radius: 3px;
+    }
+
+    .keep-block {
+      position: absolute; height: 100%;
+      background: repeating-linear-gradient(
+        45deg,
+        rgba(104, 211, 145, 0.3),
+        rgba(104, 211, 145, 0.3) 10px,
+        rgba(104, 211, 145, 0.45) 10px,
+        rgba(104, 211, 145, 0.45) 20px
+      );
+      z-index: 10;
+      border-left: 2px solid #48bb78;
+      border-right: 2px solid #48bb78;
+      pointer-events: none;
+    }
+
+    /* --- MANUAL SECTION --- */
+    .manual-section {
+      margin-top: 20px;
+      padding: 30px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.6);
+      scroll-margin-top: 20px;
+    }
+    .manual-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .manual-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+      border: 1px solid #e2e8f0;
+      text-align: center;
+    }
+    .manual-icon { font-size: 2em; margin-bottom: 10px; display: block; }
+    .manual-title { font-weight: 700; color: #3182ce; margin-bottom: 8px; display: block; }
+    .manual-text { font-size: 0.9em; color: #718096; line-height: 1.4; }
+
+    /* --- MOBILE ADJUSTMENTS --- */
+    @media (max-width: 850px) {
+        .editor-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .tools-sidebar {
+            position: relative;
+            top: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .tool-block { border-bottom: none; border-right: 1px solid #e2e8f0; padding-right: 15px; }
+        .tool-block:last-child { border-right: none; }
+    }
+
+    @media (max-width: 600px) {
+        body { padding: 10px; }
+        .help-link { top: 10px; right: 10px; font-size: 0.8em; } 
+        .loader-container { flex-direction: column; align-items: stretch; }
+        .tools-sidebar { grid-template-columns: 1fr; }
+        .tool-block { border-right: none; border-bottom: 1px solid #e2e8f0; padding-right: 0; }
+        
+        .timeline { height: 50px; }
+        .handle { width: 25px; border-radius: 6px; }
+        #playhead { height: 60px; top: -5px; }
+    }
+  </style>
+</head>
+
+<body>
+
+<a href="#howto" class="help-link">How to Use? ⇩</a>
+
+<h2>Asciinema Editor</h2>
+<p class="subtitle">
+  Simple video trimming. Drag handles &rarr; Click <b>"CUT"</b>.
+</p>
+
+<a href="index.html" class="back-link">← Back to Home</a>
+
+<div class="editor-grid">
+    
+    <aside class="tools-sidebar">
+        
+        <div class="tool-block">
+            <span class="tool-label">1. Size</span>
+            <div class="size-inputs">
+                <div><label>Width</label> <input type="number" id="screenWidth" value="80"></div>
+                <div><label>Height</label> <input type="number" id="screenHeight" value="24"></div>
+            </div>
+            <button id="applySizeBtn">Resize</button>
+        </div>
+
+        <div class="tool-block">
+            <span class="tool-label">2. Speed</span>
+            <input type="number" id="speedInput" list="speedSuggestions" value="1" step="0.1" min="0.1" placeholder="e.g. 1.0">
+            <datalist id="speedSuggestions">
+                <option value="0.5">
+                <option value="1.0">
+                <option value="1.5">
+                <option value="2.0">
+                <option value="2.5">
+            </datalist>
+            <button id="applySpeedBtn" style="margin-top: 5px;">Apply Speed</button>
+        </div>
+
+        <div class="tool-block">
+            <span class="tool-label">3. Actions</span>
+            <button id="addKeepBtn" class="highlight-btn">✨CUT (Keep)</button>
+            <div class="btn-group">
+                <button id="undoBtn">Undo</button>
+                <button id="redoBtn">Redo</button>
+            </div>
+        </div>
+        
+        <div class="tool-block" style="border-top:1px solid #e2e8f0; padding-top:15px; margin-top:5px;">
+             <span class="tool-label">4. Masking</span>
+             <label style="font-size:0.8em; color:#718096; margin-bottom:2px;">Find text (e.g. username)</label>
+             <input type="text" id="findText" placeholder="old_name">
+             
+             <label style="font-size:0.8em; color:#718096; margin-bottom:2px; margin-top:5px;">Replace with</label>
+             <input type="text" id="replaceText" placeholder="new_name">
+             
+             <button id="applyReplaceBtn" style="margin-top:10px; background:#ecc94b; border-color:#ecc94b; color:#fff;">Replace All</button>
+        </div>
+        
+        <div class="tool-block">
+            <span class="tool-label">5. Export</span>
+            <button id="previewBtn">Preview</button>
+            <button id="editBtn" style="display:none;">Stop Preview</button>
+            <button id="exportBtn" class="primary" style="margin-top:5px;">Download .cast</button>
+        </div>
+
+    </aside>
+
+    <main class="content-area">
+        
+        <div class="loader-container">
+            <div style="flex-grow: 1;">
+                <label style="display:block; font-size:0.75em; font-weight:700; color:#a0aec0; margin-bottom:4px;">UPLOAD FILE</label>
+                <input type="file" id="fileInput" accept=".cast" style="width: 100%;">
+            </div>
+            <div id="statusMsg" class="status-bar">Waiting for file...</div>
+        </div>
+
+        <div id="playerContainer">
+            <div id="previewOverlay">PREVIEW MODE</div>
+            <div id="player"></div>
+        </div>
+
+        <div class="timeline-panel" id="timelinePanel">
+            <div class="timeline-ruler" id="timelineRuler"></div>
+            <div class="timeline" id="timeline">
+            <div class="handle start"></div>
+            <div class="handle end"></div>
+            <div id="playhead"></div>
+            </div>
+        </div>
+
+        <div class="manual-section" id="howto">
+            <h3 style="margin-top:0; color:#4a5568;">📖 How to Use</h3>
+            <div class="manual-grid">
+                <div class="manual-card">
+                    <span class="manual-icon">📂</span>
+                    <span class="manual-title">1. Upload</span>
+                    <span class="manual-text">Select your <b>.cast</b> file. The video player will load automatically.</span>
+                </div>
+                
+                <div class="manual-card">
+                    <span class="manual-icon">⚙️</span>
+                    <span class="manual-title">2. Resize & Speed</span>
+                    <span class="manual-text">Set <b>Width/Height</b> to crop. Set <b>Speed</b> (e.g. 2.0) to fast-forward.</span>
+                </div>
+
+                <div class="manual-card">
+                    <span class="manual-icon">✂️</span>
+                    <span class="manual-title">3. Select & Keep</span>
+                    <span class="manual-text">Drag blue handles. Click <b>✨CUT</b> to save that part. <br><b>No Cut = Save All</b></span>
+                </div>
+
+                <div class="manual-card">
+                    <span class="manual-icon">🎭</span>
+                    <span class="manual-title">4. Mask Text</span>
+                    <span class="manual-text">Find "secret" & Replace with "***". Click <b>Replace All</b> to hide secrets.</span>
+                </div>
+
+                <div class="manual-card">
+                    <span class="manual-icon">💾</span>
+                    <span class="manual-title">5. Export</span>
+                    <span class="manual-text">Click <b>Preview</b> to check. If satisfied, click <b>Download .cast</b>.</span>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script src="https://unpkg.com/asciinema-player@3.7.1/dist/bundle/asciinema-player.min.js"></script>
+
+<script>
+console.log("EDITOR LOADED - FIXED NO SELECTION EXPORT ISSUE");
+
+const fileInput = document.getElementById("fileInput");
+const playerBox = document.getElementById("player");
+const timeline = document.getElementById("timeline");
+const ruler = document.getElementById("timelineRuler");
+const playhead = document.getElementById("playhead");
+const timelinePanel = document.getElementById("timelinePanel");
+const previewOverlay = document.getElementById("previewOverlay");
+const statusMsg = document.getElementById("statusMsg");
+
+const startHandle = document.querySelector(".handle.start");
+const endHandle   = document.querySelector(".handle.end");
+
+const addKeepBtn  = document.getElementById("addKeepBtn");
+const undoBtn     = document.getElementById("undoBtn");
+const redoBtn     = document.getElementById("redoBtn");
+const previewBtn  = document.getElementById("previewBtn");
+const editBtn     = document.getElementById("editBtn");
+const exportBtn   = document.getElementById("exportBtn");
+
+// Tools
+const speedInput = document.getElementById("speedInput"); 
+const applySpeedBtn = document.getElementById("applySpeedBtn"); 
+const applySizeBtn = document.getElementById("applySizeBtn");
+const screenWidthInput  = document.getElementById("screenWidth");
+const screenHeightInput = document.getElementById("screenHeight");
+
+// Masking Tools
+const findTextInput = document.getElementById("findText");
+const replaceTextInput = document.getElementById("replaceText");
+const applyReplaceBtn = document.getElementById("applyReplaceBtn");
+
+let castData = null; 
+let duration = 0;    
+let player = null;
+let undoStack = [];
+let redoStack = [];
+let activeHandle = null;
+let scrubbing = false;
+let selections = []; 
+let isPreviewMode = false;
+
+/* ================= LOAD CAST ================= */
+fileInput.addEventListener("change", () => {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const lines = reader.result.split("\n").filter(Boolean);
+    try {
+        const header = JSON.parse(lines[0]);
+        const stdout = lines.slice(1).map(l => JSON.parse(l));
+
+        castData = { ...header, stdout };
+        duration = stdout.at(-1)[0];
+
+        screenWidthInput.value = castData.width;
+        screenHeightInput.value = castData.height;
+
+        loadPlayer(false);
+        setTimeout(initTimeline, 100);
+        
+        statusMsg.textContent = "Loaded! Mark sections OR Export all.";
+    } catch(e) {
+        alert("Please upload a valid .cast file");
+        console.error(e);
+    }
+  };
+  if(fileInput.files.length > 0) reader.readAsText(fileInput.files[0]);
+});
+
+/* ================= PLAYER LOGIC ================= */
+function loadPlayer(isTrimmed) {
+  if (!castData) return;
+
+  playerBox.innerHTML = ""; 
+
+  let dataToPlay = castData.stdout;
+  let width = parseInt(screenWidthInput.value, 10);
+  let height = parseInt(screenHeightInput.value, 10);
+  
+  const requestedSpeed = parseFloat(speedInput.value) || 1;
+  let playbackRate = 1; 
+
+  if (isTrimmed) {
+     // Here we get logic: if no selection, returns full video
+     dataToPlay = getStitchedStdout(true); 
+  } else {
+     playbackRate = requestedSpeed;
+  }
+
+  let text = JSON.stringify({
+    version: 2,
+    width: width,
+    height: height,
+    idle_time_limit: null
+  }) + "\n";
+
+  dataToPlay.forEach(e => text += JSON.stringify(e) + "\n");
+
+  const blob = new Blob([text], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  player = AsciinemaPlayer.create(url, playerBox, {
+    controls: true,
+    fit: 'width',
+    speed: playbackRate 
+  });
+
+  if (!isTrimmed) {
+      player.addEventListener("time", e => {
+        if (!scrubbing && !activeHandle) {
+            const pct = e.detail.time / duration;
+            playhead.style.left = (pct * timeline.clientWidth) + "px";
+        }
+      });
+  }
+}
+
+/* ================= DATA PROCESSING ================= */
+function getStitchedStdout(applySpeed) {
+    if (!castData) return [];
+
+    let source = castData.stdout;
+    let final = [];
+    
+    // FIX: If no selections made, assume user wants the WHOLE video
+    let processingSelections = selections.length > 0 
+        ? selections 
+        : [{ start: 0, end: duration }];
+    
+    let sorted = [...processingSelections].sort((a, b) => a.start - b.start);
+    let merged = [];
+    
+    if (sorted.length > 0) {
+        let current = sorted[0];
+        for (let i = 1; i < sorted.length; i++) {
+            if (sorted[i].start < current.end) {
+                current.end = Math.max(current.end, sorted[i].end);
+            } else {
+                merged.push(current);
+                current = sorted[i];
+            }
+        }
+        merged.push(current);
+    }
+
+    let currentOutputTime = 0;
+    merged.forEach(interval => {
+        const chunk = source.filter(e => e[0] >= interval.start && e[0] <= interval.end);
+        chunk.forEach(e => {
+            const newTime = (e[0] - interval.start) + currentOutputTime;
+            final.push([newTime, e[1], e[2]]);
+        });
+        currentOutputTime += (interval.end - interval.start);
+    });
+
+    if (applySpeed) {
+        const speed = parseFloat(speedInput.value) || 1;
+        if (speed !== 1) {
+            final = final.map(e => [e[0] / speed, e[1], e[2]]);
+        }
+    }
+    return final;
+}
+
+/* ================= TEXT REPLACEMENT LOGIC ================= */
+applyReplaceBtn.onclick = () => {
+    if (!castData) return;
+    
+    const findStr = findTextInput.value;
+    const replaceStr = replaceTextInput.value;
+
+    if (!findStr) {
+        alert("Please enter text to find.");
+        return;
+    }
+
+    // Save state for Undo
+    undoStack.push(snapshotState());
+    redoStack.length = 0;
+
+    let count = 0;
+    // Iterate and replace in memory
+    castData.stdout = castData.stdout.map(event => {
+        // event is [time, type, data]
+        if (event[2].includes(findStr)) {
+            // Replace all occurrences in this chunk
+            const newData = event[2].split(findStr).join(replaceStr);
+            count++;
+            return [event[0], event[1], newData];
+        }
+        return event;
+    });
+
+    if (count > 0) {
+        statusMsg.textContent = `Replaced ${count} occurrences.`;
+        loadPlayer(isPreviewMode); // Reload to show changes
+    } else {
+        statusMsg.textContent = "Text not found.";
+    }
+};
+
+
+/* ================= TIMELINE LOGIC ================= */
+function initTimeline() {
+  drawTimeline();
+  resetHandles();
+  drawSelections();
+  
+  window.addEventListener('resize', () => {
+      drawTimeline();
+      drawSelections();
+  });
+}
+
+function drawTimeline() {
+  ruler.innerHTML = "";
+  const w = timeline.clientWidth;
+  const step = duration > 60 ? 10 : 5; 
+  for (let t = 0; t <= duration; t += step) {
+    const tick = document.createElement("div");
+    tick.className = "timeline-tick";
+    tick.style.left = (t / duration) * w + "px";
+    if (w > 400 || t % (step*2) === 0) { 
+        tick.textContent = formatTime(t);
+    }
+    ruler.appendChild(tick);
+  }
+}
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function resetHandles() {
+  const w = timeline.clientWidth;
+  startHandle.style.left = "0px";
+  endHandle.style.left = (w - (window.innerWidth < 600 ? 25 : 14)) + "px"; 
+}
+
+/* Touch Support */
+function handleMoveStart(e) {
+    activeHandle = e.target.closest('.handle'); 
+    if(activeHandle) {
+        e.preventDefault(); 
+        e.stopPropagation();
+    }
+}
+
+[startHandle, endHandle].forEach(h => {
+  h.addEventListener("mousedown", handleMoveStart);
+  h.addEventListener("touchstart", handleMoveStart, {passive: false});
+});
+
+function handleMoveEnd() {
+  activeHandle = null;
+  scrubbing = false;
+}
+
+document.addEventListener("mouseup", handleMoveEnd);
+document.addEventListener("touchend", handleMoveEnd);
+
+function handleMove(e) {
+  if (!activeHandle) return;
+  
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const rect = timeline.getBoundingClientRect();
+  const handleWidth = activeHandle.offsetWidth;
+  
+  let x = clamp(clientX - rect.left, 0, rect.width - handleWidth);
+  
+  if (activeHandle === startHandle) x = Math.min(x, endHandle.offsetLeft);
+  else x = Math.max(x, startHandle.offsetLeft);
+  
+  activeHandle.style.left = x + "px";
+}
+
+document.addEventListener("mousemove", handleMove);
+document.addEventListener("touchmove", handleMove, {passive: false});
+
+/* Scrubbing Logic */
+timeline.addEventListener("mousedown", startScrub);
+timeline.addEventListener("touchstart", startScrub, {passive: false});
+
+function startScrub(e) {
+    if(isPreviewMode) return;
+    if(e.target.classList.contains('handle') || e.target.closest('.handle')) return;
+    scrubbing = true;
+    updatePlayhead(e);
+}
+
+function updatePlayhead(e) {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const rect = timeline.getBoundingClientRect();
+    const x = clamp(clientX - rect.left, 0, rect.width);
+    playhead.style.left = x + "px";
+    
+    if(player) {
+        const t = (x / rect.width) * duration;
+        player.seek(t);
+    }
+}
+
+document.addEventListener("mousemove", e => { if(scrubbing) updatePlayhead(e); });
+document.addEventListener("touchmove", e => { if(scrubbing) updatePlayhead(e); });
+
+
+/* ================= BUTTONS ================= */
+addKeepBtn.onclick = () => {
+  if (isPreviewMode) return;
+  undoStack.push(snapshotState());
+  redoStack.length = 0;
+
+  const w = timeline.clientWidth;
+  const start = (startHandle.offsetLeft / w) * duration;
+  const end   = (endHandle.offsetLeft / w) * duration; 
+
+  if (end - start < 0.1) return;
+
+  selections.push({ start, end });
+  drawSelections();
+  statusMsg.textContent = `Marked: ${formatTime(start)} - ${formatTime(end)}`;
+};
+
+function drawSelections() {
+  document.querySelectorAll(".keep-block").forEach(e => e.remove());
+  const w = timeline.clientWidth;
+  
+  selections.forEach(c => {
+    const d = document.createElement("div");
+    d.className = "keep-block";
+    d.style.left = (c.start / duration) * w + "px";
+    d.style.width = ((c.end - c.start) / duration) * w + "px";
+    timeline.appendChild(d);
+  });
+}
+
+previewBtn.onclick = () => {
+    if(!castData) return;
+    // REMOVED ALERT: Allow previewing even if nothing is selected (shows full video)
+    
+    isPreviewMode = true;
+    timelinePanel.classList.add("disabled");
+    previewOverlay.style.display = "block";
+    previewBtn.style.display = "none";
+    editBtn.style.display = "inline-block";
+    addKeepBtn.disabled = true;
+    undoBtn.disabled = true;
+    
+    loadPlayer(true);
+    statusMsg.textContent = "Previewing...";
+};
+
+editBtn.onclick = () => {
+    isPreviewMode = false;
+    timelinePanel.classList.remove("disabled");
+    previewOverlay.style.display = "none";
+    previewBtn.style.display = "inline-block";
+    editBtn.style.display = "none";
+    addKeepBtn.disabled = false;
+    undoBtn.disabled = false;
+    
+    loadPlayer(false);
+    statusMsg.textContent = "Editing mode";
+};
+
+exportBtn.onclick = () => {
+  if (!castData) return;
+  // REMOVED ALERT: Allow export even if no manual selections
+  
+  const finalStdout = getStitchedStdout(true);
+  
+  if (!finalStdout.length) {
+      alert("Error generating output. File might be empty.");
+      return;
+  }
+
+  const width = parseInt(screenWidthInput.value, 10);
+  const height = parseInt(screenHeightInput.value, 10);
+
+  let text = JSON.stringify({
+    version: 2,
+    width: width,
+    height: height,
+    idle_time_limit: null
+  }) + "\n";
+
+  finalStdout.forEach(e => text += JSON.stringify(e) + "\n");
+
+  const blob = new Blob([text], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "Edited.cast";
+  a.click();
+  
+  statusMsg.textContent = "Exported!";
+};
+
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+function snapshotState() {
+  return {
+    selections: JSON.parse(JSON.stringify(selections)),
+    stdout: castData ? JSON.parse(JSON.stringify(castData.stdout)) : [], // Save stdout state for undoing replace
+    startX: startHandle.offsetLeft,
+    endX: endHandle.offsetLeft,
+  };
+}
+
+function restoreState(state) {
+  selections = JSON.parse(JSON.stringify(state.selections));
+  if(castData && state.stdout) castData.stdout = JSON.parse(JSON.stringify(state.stdout));
+  startHandle.style.left = state.startX + "px";
+  endHandle.style.left = state.endX + "px";
+  drawSelections();
+  loadPlayer(isPreviewMode);
+}
+
+undoBtn.onclick = () => {
+  if (isPreviewMode || !undoStack.length) return;
+  redoStack.push(snapshotState());
+  restoreState(undoStack.pop());
+};
+
+redoBtn.onclick = () => {
+  if (isPreviewMode || !redoStack.length) return;
+  undoStack.push(snapshotState());
+  restoreState(redoStack.pop());
+};
+
+applySizeBtn.onclick = () => {
+   if (!castData) return;
+   loadPlayer(isPreviewMode);
+   statusMsg.textContent = `Size applied: ${screenWidthInput.value}x${screenHeightInput.value}`;
+};
+
+applySpeedBtn.onclick = () => {
+   if (!castData) return;
+   loadPlayer(isPreviewMode);
+   statusMsg.textContent = `Speed applied: ${speedInput.value}x`;
+};
+
+</script>
+</body>
+</html>
