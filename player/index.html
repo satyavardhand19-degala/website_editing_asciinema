@@ -1,344 +1,244 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Asciinema Player</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects | Degala Satya Vardhan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Consistent Blue & White Palette */
+            --primary: #2563eb;         
+            --primary-hover: #1d4ed8;
+            --secondary: #0f172a;       
+            --bg-light: #f8fafc;        
+            --bg-card: #ffffff;         
+            --text-main: #1e293b;       
+            --text-muted: #64748b;      
+            --border: #e2e8f0;
+            --transition: all 0.3s ease;
+        }
 
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@3.7.1/dist/bundle/asciinema-player.css" />
+        * { box-sizing: border-box; }
+        body { 
+            margin: 0; 
+            font-family: 'Poppins', sans-serif; 
+            background: var(--bg-light); 
+            color: var(--text-main); 
+            line-height: 1.6; 
+        }
 
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+        /* --- Navigation --- */
+        nav { 
+            display: flex; 
+            justify-content: center; 
+            gap: 30px; 
+            padding: 20px; 
+            background: rgba(255, 255, 255, 0.9); 
+            backdrop-filter: blur(10px); 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+            border-bottom: 1px solid var(--border); 
+        }
+        nav a { 
+            color: var(--secondary); 
+            text-decoration: none; 
+            font-weight: 500; 
+            font-size: 0.9rem; 
+            transition: var(--transition); 
+        }
+        nav a:hover { color: var(--primary); }
 
-    html, body {
-      height: 100%;
-    }
+        /* --- Header --- */
+        .project-header { 
+            text-align: center; 
+            padding: 80px 10% 40px; 
+            background: linear-gradient(to bottom, #ffffff, var(--bg-light)); 
+        }
+        .project-header h1 { font-size: 3rem; margin: 0; color: var(--secondary); }
+        .project-header h1 span { color: var(--primary); }
+        .project-header p { color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 10px auto; }
 
-    body {
-      font-family: "Segoe UI", sans-serif;
-      background: #f8fafc;
-      color: #1a1a2e;
-      display: flex;
-      flex-direction: column;
-    }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 10%; }
 
-    nav { padding: 25px 60px; flex-shrink: 0; }
-    .logo { font-size: 1.5rem; font-weight: 700; color: #4e54c8; }
+        /* --- Projects Grid --- */
+        .projects-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+            gap: 30px; 
+        }
 
-    .container {
-      flex: 1;
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 40px 20px;
-      text-align: center;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-    }
+        .project-card { 
+            background: var(--bg-card); 
+            border-radius: 16px; 
+            padding: 30px; 
+            border: 1px solid var(--border); 
+            transition: var(--transition); 
+            display: flex; 
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .project-card:hover { 
+            transform: translateY(-10px); 
+            border-color: var(--primary); 
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); 
+        }
 
-    h1 { font-size: 2.5rem; margin-bottom: 10px; }
-    p { color: #64748b; margin-bottom: 40px; }
+        .project-card h3 { color: var(--secondary); margin-top: 0; font-size: 1.4rem; }
+        .project-card p { color: var(--text-muted); font-size: 0.95rem; flex-grow: 1; }
 
-    .upload-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      max-width: 600px;
-      margin: 0 auto;
-      border: 2px dashed #5e72e4;
-      border-radius: 20px;
-      padding: 50px 30px;
-      background: #fff;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      flex-shrink: 0;
-    }
+        /* --- Tech Tags --- */
+        .tags-container { margin: 15px 0; }
+        .tech-tag { 
+            background: rgba(37, 99, 235, 0.08); 
+            color: var(--primary); 
+            padding: 4px 10px; 
+            border-radius: 6px; 
+            font-size: 0.75rem; 
+            font-weight: 600; 
+            margin-right: 5px; 
+            text-transform: uppercase; 
+            border: 1px solid rgba(37, 99, 235, 0.1); 
+        }
 
-    .upload-box:hover { border-color: #4e54c8; background: #fcfdff; }
-    .upload-box.dragover { background: #eef2ff; border-color: #4e54c8; transform: scale(1.02); }
+        /* --- Info Note --- */
+        .project-note { 
+            background: #eff6ff; 
+            border-left: 3px solid var(--primary); 
+            color: var(--primary); 
+            padding: 10px; 
+            border-radius: 4px; 
+            font-size: 0.85rem; 
+            margin-bottom: 20px; 
+        }
 
-    .upload-box input { display: none; }
-    .upload-icon { font-size: 3rem; margin-bottom: 15px; }
-    .upload-text { font-weight: 600; margin-bottom: 8px; }
-    .upload-hint { font-size: .9rem; color: #64748b; }
+        /* --- Buttons --- */
+        .project-links { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-small { 
+            flex: 1; 
+            text-align: center; 
+            padding: 10px; 
+            border-radius: 6px; 
+            text-decoration: none; 
+            font-weight: 600; 
+            font-size: 0.85rem; 
+            transition: var(--transition); 
+        }
+        .btn-filled { background: var(--primary); color: #fff; }
+        .btn-filled:hover { background: var(--primary-hover); }
+        .btn-outline { border: 1px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: rgba(37, 99, 235, 0.05); }
 
-    /* --- PLAYER WRAPPER STYLES --- */
-    .player-wrapper {
-      width: 100%;
-      max-width: 1000px;
-      margin: 40px auto 0;
-      background: #0f172a;
-      border-radius: 8px;
-      overflow: hidden;
-      display: none;
-      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3);
-      position: relative;
-    }
-
-    /* While in Fullscreen, force wrapper to fill screen and center content */
-    .player-wrapper:fullscreen {
-      width: 100vw;
-      height: 100vh;
-      max-width: none;
-      margin: 0;
-      border-radius: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #000;
-    }
-
-    /* Ensure the player div takes available space */
-    #player { 
-      width: 100%; 
-      outline: none; 
-    }
-    
-    /* In fullscreen, let the player stretch */
-    .player-wrapper:fullscreen #player {
-      height: 100%;
-      width: 100%;
-    }
-
-    /* Toast Notification */
-    .status-toast {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: rgba(255, 255, 255, 0.9);
-      color: #000;
-      padding: 8px 16px;
-      border-radius: 4px;
-      font-weight: bold;
-      font-size: 1rem;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.3s;
-      z-index: 2147483647; /* Ensure it sits on top of fullscreen */
-    }
-
-    .shortcuts {
-      margin-top: 30px;
-      font-size: .85rem;
-      color: #64748b;
-      font-family: monospace;
-      background: #e2e8f0;
-      padding: 8px 16px;
-      border-radius: 20px;
-      display: none;
-      width: fit-content;
-      margin-left: auto;
-      margin-right: auto;
-      flex-shrink: 0;
-    }
-
-    footer { text-align: center; padding: 20px; font-size: .85rem; color: #94a3b8; flex-shrink: 0; }
-  </style>
+        footer { 
+            text-align: center; 
+            padding: 50px; 
+            color: #fff; 
+            background: var(--secondary);
+            font-size: 0.9rem; 
+            margin-top: 50px; 
+        }
+    </style>
 </head>
-
 <body>
 
-<nav>
-  <div class="logo">Asciinema Player</div>
-</nav>
+<header class="project-header">
+    <h1>My <span>Portfolio</span></h1>
+    <p>Showcasing projects in Web Development & Software Engineering</p>
+</header>
 
-<main class="container">
-  <h1>Asciinema Player</h1>
-  <p>Upload a <strong>.cast</strong> file to preview your terminal recording instantly.</p>
+<div class="container">
+    <div class="projects-grid">
 
-  <label class="upload-box" id="uploadBox">
-    <div class="upload-icon">📤</div>
-    <div class="upload-text">Click or Drag & Drop your .cast file</div>
-    <div class="upload-hint">Files stay in your browser. Nothing is uploaded.</div>
-    <input type="file" id="fileInput" accept=".cast">
-  </label>
+        <div class="project-card">
+            <h3>Asciinema Studio</h3>
+            <div class="tags-container">
+                <span class="tech-tag">HTML/JS/CSS</span>
+                <span class="tech-tag">Tooling</span>
+            </div>
+            <p>A powerful client-side web application designed to edit, trim, highlight, and merge <strong>.cast</strong> files directly in the browser. Features a visual timeline for non-destructive editing.</p>
+            <div class="project-links">
+                <a href="https://satyavardhand19-degala.github.io/Asciinema_Studio" class="btn-small btn-filled" target="_blank">Live Demo</a>
+                <a href="https://github.com/satyavardhand19-degala/Asciinema_Studio" class="btn-small btn-outline" target="_blank">Source Code</a>
+            </div>
+        </div>
 
-  <div class="player-wrapper" id="playerWrapper">
-    <div class="status-toast" id="statusToast"></div>
-    <div id="player"></div>
-  </div>
+		<div class="project-card">
+		    <h3>Asciinema Player</h3>
+		
+		    <div class="tags-container">
+		        <span class="tech-tag">HTML</span>
+		        <span class="tech-tag">CSS</span>
+		        <span class="tech-tag">JavaScript</span>
+		        <span class="tech-tag">Asciinema.js</span>
+		    </div>
+		
+		    <p>
+		        A modern browser-based Asciinema terminal player that allows users to upload 
+		        and preview .cast recordings instantly. Supports fullscreen mode, keyboard 
+		        shortcuts, playback speed control, and secure local playback without uploading 
+		        files to any server.
+		    </p>
+		
+		    <div class="project-links">
+		        <a href="https://asciinemaplayer.19122001.xyz/" class="btn-small btn-filled" target="_blank">Live Demo</a>
+		        <a href="https://github.com/satyavardhand19-degala/asciinema-player" class="btn-small btn-outline" target="_blank">Source Code</a>
+		    </div>
+		</div>
 
-  <div class="shortcuts" id="shortcuts">
-    ⌨️ Space: Play/Pause · F: Fullscreen · ↑/↓: Speed · ←/→: Seek 5s  · R: Restart
-  </div>
-</main>
+        <div class="project-card">
+            <h3>Telugish Magic</h3>
+            <div class="tags-container">
+                <span class="tech-tag">Web (JS)</span>
+                <span class="tech-tag">Python</span>
+                <span class="tech-tag">SQLite</span>
+            </div>
+            <p>A cross-platform dictionary solution featuring voice input and fast SQLite search. Allows for seamless translation between English and Telugu (Telugish).</p>
+            <div class="project-note">
+                <i class="fas fa-info-circle"></i> Note: Currently developing the mobile application version.
+            </div>
+            <div class="project-links">
+                <a href="https://satyavardhand19-degala.github.io/Telugish" class="btn-small btn-filled" target="_blank">Live Demo</a>
+                <a href="https://github.com/satyavardhand19-degala/Telugish" class="btn-small btn-outline" target="_blank">Source Code</a>
+            </div>
+        </div>
 
-<script src="https://cdn.jsdelivr.net/npm/asciinema-player@3.7.1/dist/bundle/asciinema-player.min.js"></script>
+        <div class="project-card">
+            <h3>FreePhotoX</h3>
+        
+            <div class="tags-container">
+                <span class="tech-tag">HTML</span>
+                <span class="tech-tag">CSS</span>
+                <span class="tech-tag">JavaScript</span>
+                <span class="tech-tag">TensorFlow.js</span>
+                <span class="tech-tag">AI Editor</span>
+            </div>
+        
+            <p>
+                FreePhotoX is a browser-based AI photo editor that allows users to edit images 
+                with advanced tools like background removal, AI blur, magic eraser, upscale, 
+                filters, text editing, and layers system. Built using TensorFlow.js for real-time 
+                AI processing directly in the browser without uploading images to any server.
+            </p>
+        
+            <div class="project-note">
+                <i class="fas fa-info-circle"></i>
+                Note: Currently developing the website
+            </div>
+        
+            <div class="project-links">
+                <a href="https://github.com/satyavardhand19-degala/freephotox" class="btn-small btn-outline" target="_blank">Source Code</a>
+            </div>
+        </div>
 
-<script>
-  const fileInput = document.getElementById("fileInput");
-  const uploadBox = document.getElementById("uploadBox");
-  const playerWrapper = document.getElementById("playerWrapper");
-  const playerDiv = document.getElementById("player");
-  const shortcuts = document.getElementById("shortcuts");
-  const statusToast = document.getElementById("statusToast");
+</div>
 
-  let playerInstance = null;
-  let currentObjectUrl = null;
-  
-  // State tracking
-  let isPlaying = true;
-  let playbackRate = 1.0;
-  let currentTime = 0;
-
-  function createPlayer(startAtTime = 0) {
-    if (playerInstance) playerInstance.dispose();
-
-    // Check if we are currently in fullscreen mode
-    const isFullscreen = document.fullscreenElement === playerWrapper;
-
-    // Use 'both' to fill screen if fullscreen, otherwise 'width' allows height to grow naturally
-    const fitMode = isFullscreen ? 'both' : 'width';
-
-    playerInstance = AsciinemaPlayer.create(currentObjectUrl, playerDiv, {
-      autoPlay: isPlaying,
-      theme: "dracula",
-      fit: fitMode,   // Dynamically adjust fit based on screen mode
-      preload: true,
-      speed: playbackRate,
-      startIndex: startAtTime 
-    });
-  }
-
-  function loadCast(file) {
-    if (!file.name.endsWith(".cast") && !file.name.endsWith(".json")) {
-      alert("Please upload a valid .cast file");
-      return;
-    }
-
-    if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
-    currentObjectUrl = URL.createObjectURL(file);
-
-    playerWrapper.style.display = "block";
-    shortcuts.style.display = "block";
-    
-    playbackRate = 1.0;
-    currentTime = 0;
-    isPlaying = true;
-
-    createPlayer(0);
-  }
-
-  let toastTimer;
-  function showToast(message) {
-    statusToast.innerText = message;
-    statusToast.style.opacity = "1";
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => {
-      statusToast.style.opacity = "0";
-    }, 1500);
-  }
-
-  // --- Keyboard Logic ---
-  window.addEventListener('keydown', (e) => {
-    // Only act if player is loaded
-    if (!currentObjectUrl) return;
-
-    if(["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) {
-      e.preventDefault(); 
-    }
-
-    switch(e.code) {
-      case 'Space':
-        if (!playerInstance) return;
-        // Toggle play/pause logic
-        // We can check playing status roughly or just toggle our flag
-        if (isPlaying) {
-          playerInstance.pause();
-          isPlaying = false;
-          showToast("Paused");
-        } else {
-          playerInstance.play();
-          isPlaying = true;
-          showToast("Playing");
-        }
-        break;
-
-      case 'KeyR':
-        createPlayer(0);
-        showToast("Restarted");
-        break;
-
-      case 'KeyF':
-        // Toggle Fullscreen on the WRAPPER, not the button
-        if (!document.fullscreenElement) {
-          playerWrapper.requestFullscreen().catch(err => {
-            console.log(`Error attempting to enable fullscreen: ${err.message}`);
-          });
-          // We need to recreate player shortly after to trigger fit: 'both'
-          // A small delay allows the CSS transition to happen
-          setTimeout(() => { 
-              currentTime = playerInstance ? playerInstance.getCurrentTime() : 0;
-              createPlayer(currentTime); 
-          }, 100);
-        } else {
-          document.exitFullscreen();
-          setTimeout(() => { 
-              currentTime = playerInstance ? playerInstance.getCurrentTime() : 0;
-              createPlayer(currentTime); 
-          }, 100);
-        }
-        break;
-
-      case 'ArrowUp': // Increase Speed
-        playbackRate = Math.min(playbackRate + 0.25, 4.0);
-        if(playerInstance) currentTime = playerInstance.getCurrentTime();
-        createPlayer(currentTime);
-        showToast(`Speed: ${playbackRate}x`);
-        break;
-
-      case 'ArrowDown': // Decrease Speed
-        playbackRate = Math.max(playbackRate - 0.25, 0.25);
-        if(playerInstance) currentTime = playerInstance.getCurrentTime();
-        createPlayer(currentTime);
-        showToast(`Speed: ${playbackRate}x`);
-        break;
-
-      case 'ArrowRight': // Seek Forward
-        if(!playerInstance) return;
-        currentTime = playerInstance.getCurrentTime();
-        playerInstance.seek(currentTime + 5);
-        showToast(`Forward +5s`);
-        break;
-
-      case 'ArrowLeft': // Seek Backward
-        if(!playerInstance) return;
-        currentTime = playerInstance.getCurrentTime();
-        playerInstance.seek(Math.max(0, currentTime - 5));
-        showToast(`Rewind -5s`);
-        break;
-    }
-  });
-
-  // Handle exiting fullscreen via ESC key manually to ensure layout resets
-  document.addEventListener('fullscreenchange', () => {
-    if (!document.fullscreenElement && playerInstance) {
-        // We just exited fullscreen, force re-render to fix 'fit' sizing
-        currentTime = playerInstance.getCurrentTime();
-        createPlayer(currentTime);
-    }
-  });
-
-  // --- Drag & Drop ---
-  fileInput.addEventListener("change", () => {
-    if (fileInput.files.length) loadCast(fileInput.files[0]);
-    fileInput.value = ''; 
-  });
-  uploadBox.addEventListener("dragover", e => {
-    e.preventDefault();
-    uploadBox.classList.add("dragover");
-  });
-  uploadBox.addEventListener("dragleave", () => {
-    uploadBox.classList.remove("dragover");
-  });
-  uploadBox.addEventListener("drop", e => {
-    e.preventDefault();
-    uploadBox.classList.remove("dragover");
-    if (e.dataTransfer.files.length) loadCast(e.dataTransfer.files[0]);
-  });
-</script>
+<footer>
+    © 2026 Degala Satya Vardhan | All Rights Reserved
+</footer>
 
 </body>
 </html>
